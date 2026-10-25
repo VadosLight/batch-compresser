@@ -11,12 +11,21 @@ import FfmpegWarnScreen from './screens/FfmpegWarnScreen.js';
 import RunningScreen from './screens/RunningScreen.js';
 import ScanningScreen from './screens/ScanningScreen.js';
 import SummaryScreen from './screens/SummaryScreen.js';
-import type {CompressSettings, RunSummary} from './types.js';
+import type {CompressSettings, MediaKind, RunSummary} from './types.js';
 import {totalWizardSteps, wizardStepTitle, type Screen} from './ui/types.js';
 import Wizard from './wizard/Wizard.js';
 
 type Props = {
 	initialPath?: string;
+};
+
+type ProgressState = {
+	done: number;
+	total: number;
+	current: string;
+	kind?: MediaKind;
+	status?: string;
+	filePercent?: number;
 };
 
 export default function App({initialPath}: Props) {
@@ -33,7 +42,11 @@ export default function App({initialPath}: Props) {
 	const [scanCount, setScanCount] = useState(0);
 	const [skipSmall, setSkipSmall] = useState(0);
 	const [skipCompressed, setSkipCompressed] = useState(0);
-	const [progress, setProgress] = useState({done: 0, total: 0, current: ''});
+	const [progress, setProgress] = useState<ProgressState>({
+		done: 0,
+		total: 0,
+		current: '',
+	});
 	const [summary, setSummary] = useState<RunSummary>();
 
 	useEffect(() => {
@@ -109,6 +122,9 @@ export default function App({initialPath}: Props) {
 					done: event.done,
 					total: event.total,
 					current: event.current,
+					kind: event.kind,
+					status: event.status,
+					filePercent: event.filePercent,
 				});
 			});
 			setSummary(result);
@@ -172,6 +188,9 @@ export default function App({initialPath}: Props) {
 				done={progress.done}
 				total={progress.total}
 				current={progress.current}
+				kind={progress.kind}
+				status={progress.status}
+				filePercent={progress.filePercent}
 			/>
 		);
 	}

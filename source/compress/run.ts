@@ -5,6 +5,7 @@ import {scanDirectory} from '../scan.js';
 import type {
 	CompressSettings,
 	FileResult,
+	MediaKind,
 	RunSummary,
 	ScannedFile,
 } from '../types.js';
@@ -15,6 +16,9 @@ export type ProgressEvent = {
 	done: number;
 	total: number;
 	current: string;
+	kind?: MediaKind;
+	status?: string;
+	filePercent?: number;
 	result?: FileResult;
 };
 
@@ -22,7 +26,7 @@ export const runCompression = async (
 	settings: CompressSettings,
 	onProgress?: (event: ProgressEvent) => void,
 ): Promise<RunSummary> => {
-	const logger = await createLogger(settings.rootDir);
+	const logger = await createLogger(settings.rootDir, settings);
 	const scan = await scanDirectory(settings);
 
 	for (const item of scan.skippedSmall) {
@@ -51,12 +55,32 @@ export const runCompression = async (
 	const results: FileResult[] = [];
 	let done = 0;
 
+	const emit = (file: ScannedFile, extra?: Partial<ProgressEvent>): void => {
+		onProgress?.({
+			done,
+			total,
+			current: file.path,
+			kind: file.kind,
+			...extra,
+		});
+	};
+
 	const handleOne = async (file: ScannedFile): Promise<FileResult> => {
+		emit(file, {
+			status: file.kind === 'video' ? 'probe' : 'compress',
+			filePercent: 0,
+		});
+
 		let result: FileResult;
 		if (file.kind === 'photo') {
 			result = await compressPhoto(file.path, settings);
 		} else {
-			result = await compressVideo(file.path, settings);
+			result = await compressVideo(file.path, settings, update => {
+				emit(file, {
+					status: update.status,
+					filePercent: update.percent,
+				});
+			});
 		}
 
 		if (result.bytesBefore === 0) {
@@ -78,10 +102,9 @@ export const runCompression = async (
 
 		await logger.logResult(result);
 		done++;
-		onProgress?.({
-			done,
-			total,
-			current: file.path,
+		emit(file, {
+			status: 'done',
+			filePercent: 100,
 			result,
 		});
 		return result;
@@ -104,9 +127,7 @@ export const runCompression = async (
 		logger.logPath,
 	);
 
-	// found should include only processed queue; plan says found = to process
 	summary.found = total;
-	// bytes for skipped-at-scan not in results — adjust skip counts already set
 
 	await logger.writeSummary(summary);
 	return summary;

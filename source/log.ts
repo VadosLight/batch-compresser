@@ -1,7 +1,7 @@
 import {appendFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {formatBytes} from './i18n/ru.js';
-import type {FileResult, RunSummary} from './types.js';
+import type {CompressSettings, FileResult, RunSummary} from './types.js';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -15,13 +15,49 @@ export const makeLogFileName = (date = new Date()): string => {
 	return `batch-compresser-${y}${m}${d}-${h}${min}${s}.log`;
 };
 
-export const createLogger = async (rootDir: string) => {
+export const formatSettingsBlock = (settings: CompressSettings): string => {
+	const photoMp =
+		settings.megapixels === 0 ? 'без изменения' : `${settings.megapixels} Мп`;
+	const videoHeight =
+		settings.videoMaxHeight === 0 ? 'исходное' : `${settings.videoMaxHeight}p`;
+
+	return [
+		'=== ПАРАМЕТРЫ ===',
+		`Папка: ${settings.rootDir}`,
+		`Обрабатывать фото: ${settings.processPhotos ? 'да' : 'нет'}`,
+		`Обрабатывать видео: ${settings.processVideos ? 'да' : 'нет'}`,
+		`Мин. размер фото: ${settings.minPhotoMb} МБ`,
+		`Мин. размер видео: ${settings.minVideoMb} МБ`,
+		`Формат фото: ${settings.photoFormat}`,
+		`Макс. разрешение фото: ${photoMp}`,
+		`Пресет качества фото: ${settings.photoPreset}`,
+		`Качество фото: ${settings.photoQuality}`,
+		`Пресет качества видео: ${settings.videoPreset}`,
+		`CRF видео: ${settings.videoCrf}`,
+		`Макс. высота видео: ${videoHeight}`,
+		`Режим вывода: ${
+			settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'
+		}`,
+		`Воркеры фото: ${settings.photoWorkers}`,
+		'',
+	].join('\n');
+};
+
+export const createLogger = async (
+	rootDir: string,
+	settings: CompressSettings,
+) => {
 	const logPath = path.join(rootDir, makeLogFileName());
-	await writeFile(
-		logPath,
-		`Batch Compresser log\nStarted: ${new Date().toISOString()}\n\n`,
-		'utf8',
-	);
+	const header = [
+		'Batch Compresser log',
+		`Started: ${new Date().toISOString()}`,
+		'',
+		formatSettingsBlock(settings),
+		'=== ФАЙЛЫ ===',
+		'',
+	].join('\n');
+
+	await writeFile(logPath, header, 'utf8');
 
 	const write = async (line: string): Promise<void> => {
 		await appendFile(logPath, `${line}\n`, 'utf8');
