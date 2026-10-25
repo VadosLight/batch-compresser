@@ -1,14 +1,212 @@
-import React from 'react';
-import {Text} from 'ink';
+import React, {useEffect, useState} from 'react';
+import {Box, Text, useApp, useInput} from 'ink';
+import {runCompression} from './compress/run.js';
+import {createDefaultSettings} from './defaults.js';
+import {checkFfmpeg} from './ffmpeg.js';
+import {ru} from './i18n/ru.js';
+import {scanDirectory} from './scan.js';
+import BootScreen from './screens/BootScreen.js';
+import ConfirmScreen from './screens/ConfirmScreen.js';
+import FfmpegWarnScreen from './screens/FfmpegWarnScreen.js';
+import RunningScreen from './screens/RunningScreen.js';
+import ScanningScreen from './screens/ScanningScreen.js';
+import SummaryScreen from './screens/SummaryScreen.js';
+import type {CompressSettings, RunSummary} from './types.js';
+import {totalWizardSteps, wizardStepTitle, type Screen} from './ui/types.js';
+import Wizard from './wizard/Wizard.js';
 
 type Props = {
-	name: string | undefined;
+	initialPath?: string;
 };
 
-export default function App({name = 'Stranger'}: Props) {
+export default function App({initialPath}: Props) {
+	const {exit} = useApp();
+	const [screen, setScreen] = useState<Screen>('boot');
+	const [ffmpegAvailable, setFfmpegAvailable] = useState(true);
+	const [ffmpegLine, setFfmpegLine] = useState<string>();
+	const [step, setStep] = useState(1);
+	const [settings, setSettings] = useState<CompressSettings>(() =>
+		createDefaultSettings(initialPath ?? ''),
+	);
+	const [pathDraft, setPathDraft] = useState(initialPath ?? '');
+	const [error, setError] = useState<string>();
+	const [scanCount, setScanCount] = useState(0);
+	const [skipSmall, setSkipSmall] = useState(0);
+	const [skipCompressed, setSkipCompressed] = useState(0);
+	const [progress, setProgress] = useState({done: 0, total: 0, current: ''});
+	const [summary, setSummary] = useState<RunSummary>();
+
+	useEffect(() => {
+		void (async () => {
+			const status = await checkFfmpeg();
+			setFfmpegAvailable(status.available);
+			setFfmpegLine(status.versionLine);
+			if (!status.available) {
+				setSettings(s => ({...s, processVideos: false}));
+				setScreen('ffmpegWarn');
+			} else {
+				setScreen('wizard');
+			}
+		})();
+	}, []);
+
+	const patch = (partial: Partial<CompressSettings>) => {
+		setSettings(s => ({...s, ...partial}));
+	};
+
+	const goNext = () => {
+		setError(undefined);
+		setStep(s => Math.min(totalWizardSteps, s + 1));
+	};
+
+	const goBack = () => {
+		setError(undefined);
+		setStep(s => Math.max(1, s - 1));
+	};
+
+	const validateAndScan = async () => {
+		setError(undefined);
+
+		if (!settings.rootDir) {
+			setError(ru.pathError.empty);
+			setStep(1);
+			setScreen('wizard');
+			return;
+		}
+
+		if (!settings.processPhotos && !settings.processVideos) {
+			setError(ru.needMediaType);
+			setStep(2);
+			setScreen('wizard');
+			return;
+		}
+
+		const next = {
+			...settings,
+			processVideos: settings.processVideos && ffmpegAvailable,
+		};
+		setSettings(next);
+		setScreen('scanning');
+
+		try {
+			const outcome = await scanDirectory(next);
+			setScanCount(outcome.toProcess.length);
+			setSkipSmall(outcome.skippedSmall.length);
+			setSkipCompressed(outcome.skippedCompressed.length);
+			setScreen('confirm');
+		} catch (error_) {
+			setError(error_ instanceof Error ? error_.message : String(error_));
+			setScreen('wizard');
+		}
+	};
+
+	const startRun = async () => {
+		setScreen('running');
+		setProgress({done: 0, total: scanCount, current: ''});
+		try {
+			const result = await runCompression(settings, event => {
+				setProgress({
+					done: event.done,
+					total: event.total,
+					current: event.current,
+				});
+			});
+			setSummary(result);
+			setScreen('summary');
+		} catch (error_) {
+			setError(error_ instanceof Error ? error_.message : String(error_));
+			setScreen('wizard');
+		}
+	};
+
+	useInput((_input, key) => {
+		if (screen === 'ffmpegWarn' && key.return) {
+			setScreen('wizard');
+		}
+
+		if (screen === 'confirm') {
+			if (key.return) {
+				void startRun();
+			}
+
+			if (key.escape) {
+				setScreen('wizard');
+			}
+		}
+
+		if (screen === 'summary' && (key.return || key.escape)) {
+			exit();
+		}
+
+		if (screen === 'wizard' && key.escape && step > 1) {
+			goBack();
+		}
+	});
+
+	if (screen === 'boot') {
+		return <BootScreen />;
+	}
+
+	if (screen === 'ffmpegWarn') {
+		return <FfmpegWarnScreen />;
+	}
+
+	if (screen === 'scanning') {
+		return <ScanningScreen />;
+	}
+
+	if (screen === 'confirm') {
+		return (
+			<ConfirmScreen
+				settings={settings}
+				scanCount={scanCount}
+				skipSmall={skipSmall}
+				skipCompressed={skipCompressed}
+			/>
+		);
+	}
+
+	if (screen === 'running') {
+		return (
+			<RunningScreen
+				done={progress.done}
+				total={progress.total}
+				current={progress.current}
+			/>
+		);
+	}
+
+	if (screen === 'summary' && summary) {
+		return <SummaryScreen summary={summary} />;
+	}
+
 	return (
-		<Text>
-			Hello, <Text color="green">{name}</Text>
-		</Text>
+		<Box flexDirection="column">
+			<Text bold>{ru.appTitle}</Text>
+			{ffmpegAvailable && ffmpegLine ? (
+				<Text dimColor>
+					{ru.ffmpegOk}: {ffmpegLine}
+				</Text>
+			) : null}
+			{error ? <Text color="red">{error}</Text> : null}
+			<Box marginY={1}>
+				<Text color="cyan">
+					{ru.step(step, totalWizardSteps, wizardStepTitle(step))}
+				</Text>
+			</Box>
+			<Wizard
+				step={step}
+				settings={settings}
+				pathDraft={pathDraft}
+				ffmpegAvailable={ffmpegAvailable}
+				setPathDraft={setPathDraft}
+				patch={patch}
+				onNext={goNext}
+				onBack={goBack}
+				onFinish={() => {
+					void validateAndScan();
+				}}
+			/>
+		</Box>
 	);
 }

@@ -6,24 +6,25 @@ import App from './app.js';
 
 const cli = meow(
 	`
-	Usage
+	Использование
 	  $ batch-compresser
 
-	Options
-		--name  Your name
+	Опции
+	  --path, -p  Начальный путь к папке
 
-	Examples
-	  $ batch-compresser --name=Jane
-	  Hello, Jane
+	Примеры
+	  $ batch-compresser
+	  $ batch-compresser --path ~/Pictures
 `,
 	{
 		importMeta: import.meta,
 		flags: {
-			name: {
+			path: {
 				type: 'string',
+				alias: 'p',
 			},
 		},
 	},
 );
 
-render(<App name={cli.flags.name} />);
+render(<App initialPath={cli.flags.path} />);
