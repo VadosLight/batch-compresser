@@ -31,6 +31,15 @@ export const ru = {
 	videoHeight: 'Макс. высота видео',
 	replaceFiles: 'Полная замена файлов (иначе рядом *_compressed)',
 	photoWorkers: 'Параллельных воркеров для фото',
+	videoWorkers: 'Параллельных воркеров для видео',
+	workersHint:
+		'Для тысяч видео увеличьте воркеры (учитывайте CPU/диск; на HDD лучше 1–2)',
+	stageToFastDisk: 'Staging на быстрый диск (HDD→tmp→обработка→назад)',
+	stageDir: 'Папка staging (лучше на SSD)',
+	stageDirHint: 'Например /tmp или путь на SSD',
+	stageHint:
+		'При файлах на HDD + SSD: включите staging и поднимите воркеры видео',
+	videoStatusStage: 'Копирование на быстрый диск',
 	next: 'Далее',
 	back: 'Назад (Esc)',
 	confirmTitle: 'Подтверждение запуска',
@@ -41,6 +50,8 @@ export const ru = {
 	noFiles: 'Нет файлов по заданным фильтрам.',
 	progress: (done: number, total: number, current: string) =>
 		`Обработано ${done}/${total}: ${current}`,
+	batchProgress: (done: number, total: number) => `Готово ${done}/${total}`,
+	activeJobs: 'Активных задач',
 	fileStatus: 'Статус',
 	processing: 'Обработка…',
 	kindPhoto: 'фото',
@@ -56,6 +67,7 @@ export const ru = {
 	skipSmall: (n: number) => `Пропущено (маленькие): ${n}`,
 	skipCompressed: (n: number) => `Пропущено (*_compressed): ${n}`,
 	skipLarger: (n: number) => `Пропущено (результат больше): ${n}`,
+	skipLowGain: (n: number) => `Пропущено (экономия < 3%): ${n}`,
 	errors: (n: number) => `Ошибки: ${n}`,
 	bytes: (before: number, after: number, pct: number) =>
 		`Размер: ${formatBytes(before)} → ${formatBytes(

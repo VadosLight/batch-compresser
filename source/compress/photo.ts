@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {rm} from 'node:fs/promises';
 import sharp from 'sharp';
 import {scaledSize, targetPixelsForMp} from '../presets.js';
 import type {CompressSettings, FileResult, PhotoFormatMode} from '../types.js';
@@ -26,7 +27,6 @@ const resolveOutputFormat = (
 		return {format: 'webp', ext: '.webp'};
 	}
 
-	// HEIC/HEIF/TIFF/GIF/JPEG → jpeg when keeping "same" for unsupported keep
 	if (ext === '.jpg' || ext === '.jpeg') {
 		return {format: 'jpeg', ext: '.jpg'};
 	}
@@ -34,15 +34,26 @@ const resolveOutputFormat = (
 	return {format: 'jpeg', ext: '.jpg'};
 };
 
+export type CompressPhotoOptions = {
+	/** Original path for size compare + final write (HDD). Defaults to workPath. */
+	commitPath?: string;
+	/** Called after encode finishes, before commit — e.g. delete staged input. */
+	onEncoded?: () => Promise<void>;
+};
+
 export const compressPhoto = async (
-	filePath: string,
+	workPath: string,
 	settings: Pick<
 		CompressSettings,
 		'photoFormat' | 'megapixels' | 'photoQuality' | 'replaceFiles'
 	>,
+	options: CompressPhotoOptions = {},
 ): Promise<FileResult> => {
+	const commitPath = options.commitPath ?? workPath;
+	let tmp: string | undefined;
+
 	try {
-		const image = sharp(filePath, {failOn: 'none'}).rotate();
+		const image = sharp(workPath, {failOn: 'none'}).rotate();
 		const meta = await image.metadata();
 		const width = meta.width ?? 0;
 		const height = meta.height ?? 0;
@@ -61,7 +72,7 @@ export const compressPhoto = async (
 			}
 		}
 
-		const {format, ext} = resolveOutputFormat(filePath, settings.photoFormat);
+		const {format, ext} = resolveOutputFormat(workPath, settings.photoFormat);
 		const quality = Math.min(100, Math.max(1, settings.photoQuality));
 
 		if (format === 'jpeg') {
@@ -72,17 +83,20 @@ export const compressPhoto = async (
 			pipeline = pipeline.png({compressionLevel: 9});
 		}
 
-		const tmp = tempPathFor(filePath, ext);
+		tmp = tempPathFor(workPath, ext);
 		await pipeline.toFile(tmp);
+		await options.onEncoded?.();
 
 		const replaceTarget =
-			settings.replaceFiles && path.extname(filePath).toLowerCase() !== ext
-				? filePath.slice(0, filePath.length - path.extname(filePath).length) +
-				  ext
+			settings.replaceFiles && path.extname(commitPath).toLowerCase() !== ext
+				? commitPath.slice(
+						0,
+						commitPath.length - path.extname(commitPath).length,
+				  ) + ext
 				: undefined;
 
 		return await commitOutput({
-			sourcePath: filePath,
+			sourcePath: commitPath,
 			tempPath: tmp,
 			kind: 'photo',
 			replaceFiles: settings.replaceFiles,
@@ -90,8 +104,12 @@ export const compressPhoto = async (
 			replaceTargetPath: replaceTarget,
 		});
 	} catch (error) {
+		if (tmp) {
+			await rm(tmp, {force: true}).catch(() => undefined);
+		}
+
 		return {
-			path: filePath,
+			path: commitPath,
 			kind: 'photo',
 			status: 'error',
 			bytesBefore: 0,

@@ -12,7 +12,8 @@ export const makeLogFileName = (date = new Date()): string => {
 	const h = pad(date.getHours());
 	const min = pad(date.getMinutes());
 	const s = pad(date.getSeconds());
-	return `batch-compresser-${y}${m}${d}-${h}${min}${s}.log`;
+	const ms = String(date.getMilliseconds()).padStart(3, '0');
+	return `batch-compresser-${y}${m}${d}-${h}${min}${s}-${ms}.log`;
 };
 
 export const formatSettingsBlock = (settings: CompressSettings): string => {
@@ -39,6 +40,11 @@ export const formatSettingsBlock = (settings: CompressSettings): string => {
 			settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'
 		}`,
 		`Воркеры фото: ${settings.photoWorkers}`,
+		`Воркеры видео: ${settings.videoWorkers}`,
+		`Staging на быстрый диск: ${settings.stageToFastDisk ? 'да' : 'нет'}`,
+		...(settings.stageToFastDisk
+			? [`Папка staging: ${settings.stageDir}`]
+			: []),
 		'',
 	].join('\n');
 };
@@ -68,8 +74,8 @@ export const createLogger = async (
 			result.status.toUpperCase(),
 			result.kind,
 			result.path,
-			`before=${result.bytesBefore}`,
-			`after=${result.bytesAfter}`,
+			`before=${result.bytesBefore} (${formatBytes(result.bytesBefore)})`,
+			`after=${result.bytesAfter} (${formatBytes(result.bytesAfter)})`,
 		];
 		if (result.errorMessage) {
 			parts.push(`error=${result.errorMessage}`);
@@ -93,6 +99,7 @@ export const createLogger = async (
 			`Пропущено (маленькие): ${summary.skipSmall}`,
 			`Пропущено (*_compressed): ${summary.skipCompressed}`,
 			`Пропущено (результат больше): ${summary.skipLarger}`,
+			`Пропущено (экономия < 3%): ${summary.skipLowGain}`,
 			`Ошибки: ${summary.errors}`,
 			`Размер: ${formatBytes(summary.bytesBefore)} → ${formatBytes(
 				summary.bytesAfter,
@@ -116,6 +123,7 @@ export const buildSummary = (
 ): RunSummary => {
 	let compressed = 0;
 	let skipLarger = 0;
+	let skipLowGain = 0;
 	let errors = 0;
 	let bytesBefore = 0;
 	let bytesAfter = 0;
@@ -127,6 +135,9 @@ export const buildSummary = (
 			bytesAfter += r.bytesAfter;
 		} else if (r.status === 'skip_larger') {
 			skipLarger++;
+			bytesAfter += r.bytesBefore;
+		} else if (r.status === 'skip_low_gain') {
+			skipLowGain++;
 			bytesAfter += r.bytesBefore;
 		} else if (r.status === 'error') {
 			errors++;
@@ -142,6 +153,7 @@ export const buildSummary = (
 		skipSmall: skipSmallCount,
 		skipCompressed: skipCompressedCount,
 		skipLarger,
+		skipLowGain,
 		errors,
 		bytesBefore,
 		bytesAfter,

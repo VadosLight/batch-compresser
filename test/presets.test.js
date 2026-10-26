@@ -66,7 +66,7 @@ test('detectKind', t => {
 
 test('makeLogFileName shape', t => {
 	const name = makeLogFileName(new Date('2026-10-25T12:34:56'));
-	t.regex(name, /^batch-compresser-\d{8}-\d{6}\.log$/);
+	t.regex(name, /^batch-compresser-\d{8}-\d{6}-\d{3}\.log$/);
 });
 
 test('buildSummary counts', t => {
@@ -93,13 +93,21 @@ test('buildSummary counts', t => {
 			bytesAfter: 200,
 			errorMessage: 'x',
 		},
+		{
+			path: 'd',
+			kind: 'video',
+			status: 'skip_low_gain',
+			bytesBefore: 300,
+			bytesAfter: 300,
+		},
 	];
 	const summary = buildSummary(results, 2, 1, '/tmp/log');
 	t.is(summary.compressed, 1);
 	t.is(summary.skipLarger, 1);
+	t.is(summary.skipLowGain, 1);
 	t.is(summary.errors, 1);
 	t.is(summary.skipSmall, 2);
 	t.is(summary.skipCompressed, 1);
-	t.is(summary.bytesBefore, 1700);
-	t.is(summary.bytesAfter, 1100);
+	t.is(summary.bytesBefore, 2000);
+	t.is(summary.bytesAfter, 1400);
 });

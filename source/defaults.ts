@@ -1,4 +1,5 @@
-import {defaultPhotoWorkers} from './presets.js';
+import {defaultStageDir} from './fs/stage.js';
+import {defaultPhotoWorkers, defaultVideoWorkers} from './presets.js';
 import type {CompressSettings} from './types.js';
 
 export const createDefaultSettings = (rootDir = ''): CompressSettings => ({
@@ -16,4 +17,7 @@ export const createDefaultSettings = (rootDir = ''): CompressSettings => ({
 	videoMaxHeight: 0,
 	replaceFiles: false,
 	photoWorkers: defaultPhotoWorkers(),
+	videoWorkers: defaultVideoWorkers(),
+	stageToFastDisk: false,
+	stageDir: defaultStageDir(),
 });

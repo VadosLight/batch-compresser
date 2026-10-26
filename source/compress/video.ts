@@ -1,33 +1,45 @@
 import path from 'node:path';
+import {rm} from 'node:fs/promises';
 import {execa} from 'execa';
 import {probeVideo} from '../ffmpeg.js';
 import type {CompressSettings, FileResult} from '../types.js';
 import {parseProgressTimeSec, percentFromTime} from './ffmpeg-progress.js';
-import {commitOutput, tempPathFor} from './write.js';
+import {commitOutput, tempPathFor, videoMinSavingsRatio} from './write.js';
 
 export type VideoProgressUpdate = {
 	status: 'probe' | 'encode' | 'finalize';
 	percent: number;
 };
 
+export type CompressVideoOptions = {
+	/** Original path for size compare + final write (HDD). Defaults to workPath. */
+	commitPath?: string;
+	/** Called after encode finishes, before commit — e.g. delete staged input to free SSD. */
+	onEncoded?: () => Promise<void>;
+};
+
 export const compressVideo = async (
-	filePath: string,
+	workPath: string,
 	settings: Pick<
 		CompressSettings,
 		'videoCrf' | 'videoMaxHeight' | 'replaceFiles'
 	>,
 	onFileProgress?: (update: VideoProgressUpdate) => void,
+	options: CompressVideoOptions = {},
 ): Promise<FileResult> => {
+	const commitPath = options.commitPath ?? workPath;
+	let tmp: string | undefined;
+
 	try {
 		onFileProgress?.({status: 'probe', percent: 0});
-		const probe = await probeVideo(filePath);
+		const probe = await probeVideo(workPath);
 		const durationSec =
 			probe.durationSec && Number.isFinite(probe.durationSec)
 				? probe.durationSec
 				: 0;
 
 		const crf = Math.min(51, Math.max(0, settings.videoCrf));
-		const args = ['-y', '-hide_banner', '-i', filePath];
+		const args = ['-y', '-hide_banner', '-i', workPath];
 
 		const filters: string[] = [];
 		if (settings.videoMaxHeight > 0 && probe.height > settings.videoMaxHeight) {
@@ -57,7 +69,7 @@ export const compressVideo = async (
 		);
 
 		const ext = '.mp4';
-		const tmp = tempPathFor(filePath, ext);
+		tmp = tempPathFor(workPath, ext);
 		args.push(tmp);
 
 		onFileProgress?.({status: 'encode', percent: 0});
@@ -82,25 +94,31 @@ export const compressVideo = async (
 		await subprocess;
 
 		onFileProgress?.({status: 'finalize', percent: 100});
+		await options.onEncoded?.();
 
 		const replaceTarget = settings.replaceFiles
 			? path.join(
-					path.dirname(filePath),
-					`${path.basename(filePath, path.extname(filePath))}.mp4`,
+					path.dirname(commitPath),
+					`${path.basename(commitPath, path.extname(commitPath))}.mp4`,
 			  )
 			: undefined;
 
 		return await commitOutput({
-			sourcePath: filePath,
+			sourcePath: commitPath,
 			tempPath: tmp,
 			kind: 'video',
 			replaceFiles: settings.replaceFiles,
 			outputExt: ext,
 			replaceTargetPath: replaceTarget,
+			minSavingsRatio: videoMinSavingsRatio,
 		});
 	} catch (error) {
+		if (tmp) {
+			await rm(tmp, {force: true}).catch(() => undefined);
+		}
+
 		return {
-			path: filePath,
+			path: commitPath,
 			kind: 'video',
 			status: 'error',
 			bytesBefore: 0,

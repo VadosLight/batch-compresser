@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text, useApp, useInput} from 'ink';
-import {runCompression} from './compress/run.js';
+import {runCompression, type ActiveJobProgress} from './compress/run.js';
 import {createDefaultSettings} from './defaults.js';
 import {checkFfmpeg} from './ffmpeg.js';
 import {ru} from './i18n/ru.js';
@@ -26,6 +26,7 @@ type ProgressState = {
 	kind?: MediaKind;
 	status?: string;
 	filePercent?: number;
+	activeJobs: ActiveJobProgress[];
 };
 
 export default function App({initialPath}: Props) {
@@ -46,6 +47,7 @@ export default function App({initialPath}: Props) {
 		done: 0,
 		total: 0,
 		current: '',
+		activeJobs: [],
 	});
 	const [summary, setSummary] = useState<RunSummary>();
 
@@ -115,7 +117,7 @@ export default function App({initialPath}: Props) {
 
 	const startRun = async () => {
 		setScreen('running');
-		setProgress({done: 0, total: scanCount, current: ''});
+		setProgress({done: 0, total: scanCount, current: '', activeJobs: []});
 		try {
 			const result = await runCompression(settings, event => {
 				setProgress({
@@ -125,6 +127,7 @@ export default function App({initialPath}: Props) {
 					kind: event.kind,
 					status: event.status,
 					filePercent: event.filePercent,
+					activeJobs: event.activeJobs,
 				});
 			});
 			setSummary(result);
@@ -191,6 +194,7 @@ export default function App({initialPath}: Props) {
 				kind={progress.kind}
 				status={progress.status}
 				filePercent={progress.filePercent}
+				activeJobs={progress.activeJobs}
 			/>
 		);
 	}

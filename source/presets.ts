@@ -19,6 +19,12 @@ export const getPreset = (id: QualityPresetId): QualityPreset | undefined =>
 
 export const defaultPhotoWorkers = (): number => Math.max(1, cpus().length - 1);
 
+/** Conservative default for heavy ffmpeg jobs; raise in TUI for bulk runs. */
+export const defaultVideoWorkers = (): number => {
+	const half = Math.floor(cpus().length / 2);
+	return Math.max(1, Math.min(4, half || 1));
+};
+
 export const megapixelChoices: ReadonlyArray<{
 	value: 0 | 1 | 2 | 4 | 8 | 12;
 	label: string;

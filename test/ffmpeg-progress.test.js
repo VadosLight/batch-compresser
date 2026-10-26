@@ -38,4 +38,12 @@ test('formatSettingsBlock includes key settings', t => {
 	t.true(block.includes('Качество фото: 75'));
 	t.true(block.includes('CRF видео: 24'));
 	t.true(block.includes('замена файлов'));
+	t.true(block.includes('Воркеры видео:'));
+	t.true(block.includes('Staging на быстрый диск:'));
+});
+
+test('defaultVideoWorkers at least 1', async t => {
+	const {defaultVideoWorkers} = await import('../dist/presets.js');
+	t.true(defaultVideoWorkers() >= 1);
+	t.true(defaultVideoWorkers() <= 4);
 });

@@ -37,7 +37,13 @@ export default function ConfirmScreen({
 				{settings.minVideoMb} МБ, CRF={settings.videoCrf}, высота=
 				{settings.videoMaxHeight || 'исх.'}
 			</Text>
-			<Text>Воркеры фото: {settings.photoWorkers}</Text>
+			<Text>
+				Воркеры: фото {settings.photoWorkers}, видео {settings.videoWorkers}
+			</Text>
+			<Text>
+				Staging: {settings.stageToFastDisk ? ru.yes : ru.no}
+				{settings.stageToFastDisk ? ` → ${settings.stageDir}` : ''}
+			</Text>
 			<Box marginTop={1} flexDirection="column">
 				<Text color="green">{ru.confirmStart}</Text>
 				<Text dimColor>{ru.confirmCancel}</Text>

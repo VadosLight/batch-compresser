@@ -10,22 +10,22 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 - **Photos:** `sharp` (quality, megapixel downscale, format JPEG/WebP/same)
 - **Videos:** system `ffmpeg` → H.264 + AAC in MP4 (CRF, max height)
 - **Output:** replace in place **or** sibling `*_compressed.*`
-- **Safety:** skip tiny files (separate MB thresholds), skip `*_compressed*`, skip if result ≥ original
+- **Safety:** skip tiny files (separate MB thresholds), skip `*_compressed*`, skip if result ≥ original; **videos** also keep original if savings &lt; 3%
 - **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` in the target folder (settings header + per-file lines + summary)
 
 ## Stack
 
-| Layer | Choice |
-|-------|--------|
-| Runtime | Node ≥ 16, ESM (`"type": "module"`) |
-| Language | TypeScript (`rootDir: ./source`, `outDir: dist`) |
-| TUI | Ink 4 + React 18 |
-| Inputs | `ink-text-input`, custom `Select` |
-| Photos | `sharp` |
-| Videos | system `ffmpeg` / `ffprobe` via `execa` |
-| CLI flags | `meow` (`--path` / `-p`) |
-| Concurrency | `p-limit` (photos parallel, videos serial) |
-| Lint/test | prettier, xo, ava (`test/**/*.test.js` against `dist/`) |
+| Layer       | Choice                                                                        |
+| ----------- | ----------------------------------------------------------------------------- |
+| Runtime     | Node ≥ 16, ESM (`"type": "module"`)                                           |
+| Language    | TypeScript (`rootDir: ./source`, `outDir: dist`)                              |
+| TUI         | Ink 4 + React 18                                                              |
+| Inputs      | `ink-text-input`, custom `Select`                                             |
+| Photos      | `sharp`                                                                       |
+| Videos      | system `ffmpeg` / `ffprobe` via `execa`                                       |
+| CLI flags   | `meow` (`--path` / `-p`)                                                      |
+| Concurrency | `p-limit` — photos (`photoWorkers`) and videos (`videoWorkers`) both parallel |
+| Lint/test   | prettier, xo, ava (`test/**/*.test.js` against `dist/`)                       |
 
 **Do not** reintroduce the npm `ffmpeg` package — only the system binary.
 
@@ -76,7 +76,7 @@ Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
 3. Min size thresholds (MB)
 4. Photo settings (format, MP, quality/preset)
 5. Video settings (CRF/preset, max height) — skipped if no ffmpeg / videos off
-6. Replace vs `_compressed`, photo worker count
+6. Replace vs `_compressed`, photo/video workers, optional HDD→SSD staging
 7. Ready → scan
 
 ### Compression pipeline
@@ -84,9 +84,10 @@ Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
 1. `createLogger(rootDir, settings)` — writes `=== ПАРАМЕТРЫ ===` first
 2. `scanDirectory` — recursive; classifies by extension; applies min-size and `*_compressed` skips
 3. Photos: parallel (`photoWorkers`, default `cpus()-1`)
-4. Videos: **one at a time**; progress via `ffmpeg -progress pipe:1` → UI bar + status
-5. `commitOutput` — write `.tmp*`, compare sizes, rename or discard (`skip_larger`)
-6. Final summary on screen and at end of log
+4. Videos: parallel (`videoWorkers`, default `min(4, floor(cpus/2))`); per-file progress via `ffmpeg -progress pipe:1`
+5. Optional **staging** (`stageToFastDisk`): copy HDD → SSD tmp → encode → **delete staged input immediately** → write result back (EXDEV-safe `moveFile`); session dir cleaned in `finally`
+6. `commitOutput` — write `.tmp*`, compare sizes, rename/copy or discard (`skip_larger`)
+7. Final summary on screen and at end of log; staging session dir cleaned in `finally`
 
 ### Progress events
 
@@ -94,22 +95,24 @@ Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
 
 - Batch: `done` / `total` / `current`
 - Per file: `kind`, `status` (`probe` | `encode` | `finalize` | …), `filePercent` (videos)
+- Parallel: `activeJobs[]` — all in-flight files (RunningScreen lists each with its own bar)
 
 UI: `screens/RunningScreen.tsx`.
 
 ## Key domain rules
 
-| Topic | Behavior | Where |
-|-------|----------|--------|
-| Photo MP | Downscale only if `w*h` > target MP; keep aspect | `presets.scaledSize`, `compress/photo.ts` |
-| Photo format | `same` / `jpeg` / `webp`; HEIC etc. → JPEG when “same” needs conversion | `compress/photo.ts` |
-| EXIF | Apply orientation (`rotate()`); do not copy other EXIF | `compress/photo.ts` |
-| Video out | Always `.mp4` H.264 + AAC; optional scale by max height | `compress/video.ts` |
-| Replace video | May change extension; unlink old after successful write | `compress/write.ts` |
-| Alongside name | `name_compressed.ext` | `presets.compressedSiblingPath` |
-| Min size `0` | Filter off | `presets.isBelowMinSize` |
-| ffmpeg missing | Warn at start; force videos off; photos still work | `app.tsx`, `ffmpeg.ts` |
-| Folder picker | macOS osascript / Windows WinForms / Linux zenity\|kdialog | `fs/pick-folder.ts` |
+| Topic          | Behavior                                                                | Where                                     |
+| -------------- | ----------------------------------------------------------------------- | ----------------------------------------- |
+| Photo MP       | Downscale only if `w*h` > target MP; keep aspect                        | `presets.scaledSize`, `compress/photo.ts` |
+| Photo format   | `same` / `jpeg` / `webp`; HEIC etc. → JPEG when “same” needs conversion | `compress/photo.ts`                       |
+| EXIF           | Apply orientation (`rotate()`); do not copy other EXIF                  | `compress/photo.ts`                       |
+| Video out      | Always `.mp4` H.264 + AAC; optional scale by max height                 | `compress/video.ts`                       |
+| Replace video  | May change extension; unlink old after successful write                 | `compress/write.ts`                       |
+| Alongside name | `name_compressed.ext`                                                   | `presets.compressedSiblingPath`           |
+| Min size `0`   | Filter off                                                              | `presets.isBelowMinSize`                  |
+| ffmpeg missing | Warn at start; force videos off; photos still work                      | `app.tsx`, `ffmpeg.ts`                    |
+| Folder picker  | macOS osascript / Windows WinForms / Linux zenity\|kdialog              | `fs/pick-folder.ts`                       |
+| Staging        | Copy to `stageDir` (default OS tmp), encode there, commit to original   | `fs/stage.ts`, `compress/run.ts`          |
 
 ## Conventions for changes
 
@@ -124,16 +127,16 @@ UI: `screens/RunningScreen.tsx`.
 
 ## Where to change what
 
-| Goal | Touch |
-|------|--------|
-| New CLI flag | `cli.tsx` + pass into `App` |
-| Default settings | `defaults.ts`, `presets.ts` |
-| Log format / settings dump | `log.ts` (`formatSettingsBlock`) |
-| Photo codecs / resize | `compress/photo.ts` |
+| Goal                          | Touch                                     |
+| ----------------------------- | ----------------------------------------- |
+| New CLI flag                  | `cli.tsx` + pass into `App`               |
+| Default settings              | `defaults.ts`, `presets.ts`               |
+| Log format / settings dump    | `log.ts` (`formatSettingsBlock`)          |
+| Photo codecs / resize         | `compress/photo.ts`                       |
 | Video encode flags / progress | `compress/video.ts`, `ffmpeg-progress.ts` |
-| Extensions scanned | `scan.ts` |
-| Worker / queue policy | `compress/run.ts` |
-| Select keyboard UX | `components/Select.tsx` |
+| Extensions scanned            | `scan.ts`                                 |
+| Worker / queue / staging      | `compress/run.ts`, `fs/stage.ts`          |
+| Select keyboard UX            | `components/Select.tsx`                   |
 
 ## Out of scope (v1 — do not add unless requested)
 

@@ -13,6 +13,7 @@ export type FileStatus =
 	| 'skip_small'
 	| 'skip_compressed'
 	| 'skip_larger'
+	| 'skip_low_gain'
 	| 'error';
 
 export type CompressSettings = {
@@ -30,6 +31,11 @@ export type CompressSettings = {
 	videoMaxHeight: VideoMaxHeight;
 	replaceFiles: boolean;
 	photoWorkers: number;
+	videoWorkers: number;
+	/** Copy source to fast disk (SSD tmp) before encode, then write result back. */
+	stageToFastDisk: boolean;
+	/** Root for staging sessions; default is OS tmpdir/batch-compresser. */
+	stageDir: string;
 };
 
 export type ScannedFile = {
@@ -53,6 +59,7 @@ export type RunSummary = {
 	skipSmall: number;
 	skipCompressed: number;
 	skipLarger: number;
+	skipLowGain: number;
 	errors: number;
 	bytesBefore: number;
 	bytesAfter: number;
