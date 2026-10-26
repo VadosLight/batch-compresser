@@ -100,6 +100,13 @@ test('buildSummary counts', t => {
 			bytesBefore: 300,
 			bytesAfter: 300,
 		},
+		{
+			path: 'e',
+			kind: 'video',
+			status: 'skip_user',
+			bytesBefore: 400,
+			bytesAfter: 400,
+		},
 	];
 	const summary = buildSummary(
 		results,
@@ -109,10 +116,11 @@ test('buildSummary counts', t => {
 	t.is(summary.compressed, 1);
 	t.is(summary.skipLarger, 1);
 	t.is(summary.skipLowGain, 1);
+	t.is(summary.skipUser, 1);
 	t.is(summary.errors, 1);
 	t.is(summary.skipSmall, 2);
 	t.is(summary.skipCompressed, 1);
 	t.is(summary.skipPrevious, 4);
-	t.is(summary.bytesBefore, 2000);
-	t.is(summary.bytesAfter, 1400);
+	t.is(summary.bytesBefore, 2400);
+	t.is(summary.bytesAfter, 1800);
 });

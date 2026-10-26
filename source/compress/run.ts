@@ -129,7 +129,7 @@ export const runCompression = async (
 	const videoAbortControllers = new Map<string, AbortController>();
 
 	onControls?.({
-		skipVideo: (path: string) => {
+		skipVideo(path: string) {
 			videoAbortControllers.get(path)?.abort();
 		},
 	});
@@ -234,7 +234,7 @@ export const runCompression = async (
 
 		try {
 			if (signal?.aborted) {
-				return finishResult(file, {
+				return await finishResult(file, {
 					path: file.path,
 					kind: file.kind,
 					status: 'skip_user',
@@ -249,7 +249,7 @@ export const runCompression = async (
 				workPath = await stageFile(file.path, sessionDir);
 				if (signal?.aborted) {
 					await cleanupStagedFile(workPath, commitPath);
-					return finishResult(file, {
+					return await finishResult(file, {
 						path: file.path,
 						kind: file.kind,
 						status: 'skip_user',
@@ -286,12 +286,12 @@ export const runCompression = async (
 			}
 
 			await cleanupStagedFile(workPath, commitPath);
-			return finishResult(file, result);
+			return await finishResult(file, result);
 		} catch (error) {
 			await cleanupStagedFile(workPath, commitPath);
 
 			if (isCancelError(error, signal)) {
-				return finishResult(file, {
+				return await finishResult(file, {
 					path: file.path,
 					kind: file.kind,
 					status: 'skip_user',
@@ -300,7 +300,7 @@ export const runCompression = async (
 				});
 			}
 
-			return finishResult(file, {
+			return await finishResult(file, {
 				path: file.path,
 				kind: file.kind,
 				status: 'error',

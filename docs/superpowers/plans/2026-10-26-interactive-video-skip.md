@@ -25,12 +25,14 @@
 ### Task 1: Types + previous-logs resume for SKIP_USER
 
 **Files:**
+
 - Modify: `source/types.ts`
 - Modify: `source/fs/previous-logs.ts`
 - Modify: `test/previous-logs.test.js`
 - Modify: `source/log.ts` (summary field wiring prepared in Task 4; types only here if needed)
 
 **Interfaces:**
+
 - Produces: `FileStatus` includes `'skip_user'`; `RunSummary.skipUser: number`; parser accepts `SKIP_USER` lines
 
 - [ ] **Step 1: Extend failing tests for SKIP_USER resume**
@@ -119,13 +121,16 @@ EOF
 ### Task 2: Classify cancel errors + compressVideo abort → skip_user
 
 **Files:**
+
 - Create: `source/compress/abort.ts`
 - Modify: `source/compress/video.ts`
 - Create: `test/abort.test.js`
 
 **Interfaces:**
+
 - Consumes: `FileStatus` / `FileResult` from types
 - Produces:
+
   - `isCancelError(error: unknown, signal?: AbortSignal): boolean`
   - `CompressVideoOptions.signal?: AbortSignal`
   - `compressVideo(...)` returns `{ status: 'skip_user', ... }` when aborted
@@ -247,10 +252,12 @@ EOF
 ### Task 3: runCompression AbortControllers + RunControls
 
 **Files:**
+
 - Modify: `source/compress/run.ts`
 - Modify: `source/app.tsx` (signature only if needed in Task 5; prefer finishing API here)
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -362,12 +369,14 @@ EOF
 ### Task 4: Summary counts for skip_user
 
 **Files:**
+
 - Modify: `source/log.ts`
 - Modify: `source/screens/SummaryScreen.tsx`
 - Modify: `source/i18n/ru.ts`
 - Modify: `test/presets.test.js` (buildSummary call / assertions)
 
 **Interfaces:**
+
 - Consumes: `RunSummary.skipUser`
 - Produces: log footer + UI line `Пропущено (пользователь): N`
 
@@ -428,11 +437,13 @@ EOF
 ### Task 5: RunningScreen focus + confirm + App wiring
 
 **Files:**
+
 - Modify: `source/screens/RunningScreen.tsx`
 - Modify: `source/app.tsx`
 - Modify: `source/i18n/ru.ts`
 
 **Interfaces:**
+
 - Consumes: `RunControls.skipVideo`
 - Produces: interactive skip UX on running screen
 
@@ -489,7 +500,9 @@ await runCompression(settings, {
 	onControls: controls => {
 		setSkipVideo(() => controls.skipVideo);
 	},
-	onProgress: event => { /* existing setProgress */ },
+	onProgress: event => {
+		/* existing setProgress */
+	},
 });
 ```
 
@@ -525,6 +538,7 @@ EOF
 ### Task 6: Docs
 
 **Files:**
+
 - Modify: `AGENTS.md`
 - Modify: `readme.md` (one bullet under capabilities)
 
@@ -553,18 +567,18 @@ EOF
 
 ## Spec coverage checklist
 
-| Spec requirement | Task |
-| ---------------- | ---- |
-| Focus active video with ↑↓ | Task 5 |
-| `s` + Enter/Esc confirm | Task 5 |
-| Abort ffmpeg via AbortSignal | Tasks 2–3 |
-| Keep original; clean tmp/staging | Tasks 2–3 |
-| Log `SKIP_USER` | Tasks 1–3 (status → logger) |
-| Resume parses SKIP_USER | Task 1 |
-| Summary skip_user | Task 4 |
-| Photos unaffected | Tasks 3, 5 |
-| Russian strings | Tasks 4–5 |
-| AGENTS/readme | Task 6 |
+| Spec requirement                 | Task                        |
+| -------------------------------- | --------------------------- |
+| Focus active video with ↑↓       | Task 5                      |
+| `s` + Enter/Esc confirm          | Task 5                      |
+| Abort ffmpeg via AbortSignal     | Tasks 2–3                   |
+| Keep original; clean tmp/staging | Tasks 2–3                   |
+| Log `SKIP_USER`                  | Tasks 1–3 (status → logger) |
+| Resume parses SKIP_USER          | Task 1                      |
+| Summary skip_user                | Task 4                      |
+| Photos unaffected                | Tasks 3, 5                  |
+| Russian strings                  | Tasks 4–5                   |
+| AGENTS/readme                    | Task 6                      |
 
 ## Notes for implementers
 

@@ -15,12 +15,12 @@ While videos are being compressed, the user can focus one active video job, conf
 
 **Screen:** `RunningScreen` only, while there is at least one active **video** job.
 
-| Key | Action |
-| --- | --- |
+| Key   | Action                                       |
+| ----- | -------------------------------------------- |
 | ↑ / ↓ | Move focus among currently active video jobs |
-| `s` | Open confirm for the focused video |
-| Enter | Confirm skip → abort that job |
-| Esc | Cancel confirm (encode continues) |
+| `s`   | Open confirm for the focused video           |
+| Enter | Confirm skip → abort that job                |
+| Esc   | Cancel confirm (encode continues)            |
 
 - Focus indicator on the focused job row (e.g. `>` or highlight).
 - Confirm line: short Russian prompt with basename, e.g. `Пропустить video.mp4? Enter — да · Esc — нет`.
@@ -99,19 +99,19 @@ runCompression(settings, {
 
 ## Files to touch
 
-| File | Change |
-| ---- | ------ |
-| `source/types.ts` | `skip_user` status; summary field if added |
-| `source/compress/video.ts` | `cancelSignal`, abort → skip |
-| `source/compress/run.ts` | AbortControllers, controls, cleanup on skip |
-| `source/fs/previous-logs.ts` | Parse `SKIP_USER` |
-| `source/log.ts` | Summary line for skip_user if counted |
-| `source/screens/RunningScreen.tsx` | Focus, confirm, keys |
-| `source/screens/SummaryScreen.tsx` | Optional skip_user line |
-| `source/app.tsx` | Wire controls + input ownership |
-| `source/i18n/ru.ts` | Prompts / hints / summary |
-| `test/previous-logs.test.js` | SKIP_USER case |
-| `AGENTS.md` | Short note on interactive skip + resume |
+| File                               | Change                                      |
+| ---------------------------------- | ------------------------------------------- |
+| `source/types.ts`                  | `skip_user` status; summary field if added  |
+| `source/compress/video.ts`         | `cancelSignal`, abort → skip                |
+| `source/compress/run.ts`           | AbortControllers, controls, cleanup on skip |
+| `source/fs/previous-logs.ts`       | Parse `SKIP_USER`                           |
+| `source/log.ts`                    | Summary line for skip_user if counted       |
+| `source/screens/RunningScreen.tsx` | Focus, confirm, keys                        |
+| `source/screens/SummaryScreen.tsx` | Optional skip_user line                     |
+| `source/app.tsx`                   | Wire controls + input ownership             |
+| `source/i18n/ru.ts`                | Prompts / hints / summary                   |
+| `test/previous-logs.test.js`       | SKIP_USER case                              |
+| `AGENTS.md`                        | Short note on interactive skip + resume     |
 
 ## Success criteria
 

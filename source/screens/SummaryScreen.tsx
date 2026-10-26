@@ -19,6 +19,7 @@ export default function SummaryScreen({summary}: Props) {
 			<Text>{ru.skipSmall(summary.skipSmall)}</Text>
 			<Text>{ru.skipCompressed(summary.skipCompressed)}</Text>
 			<Text>{ru.skipPrevious(summary.skipPrevious)}</Text>
+			<Text>{ru.skipUser(summary.skipUser)}</Text>
 			<Text>{ru.skipLarger(summary.skipLarger)}</Text>
 			<Text>{ru.skipLowGain(summary.skipLowGain)}</Text>
 			<Text color={summary.errors ? 'red' : undefined}>

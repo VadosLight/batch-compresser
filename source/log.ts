@@ -118,6 +118,7 @@ export const createLogger = async (
 			`Пропущено (маленькие): ${summary.skipSmall}`,
 			`Пропущено (*_compressed): ${summary.skipCompressed}`,
 			`Пропущено (уже в логах): ${summary.skipPrevious}`,
+			`Пропущено (пользователь): ${summary.skipUser}`,
 			`Пропущено (результат больше): ${summary.skipLarger}`,
 			`Пропущено (экономия < 3%): ${summary.skipLowGain}`,
 			`Ошибки: ${summary.errors}`,
@@ -154,6 +155,7 @@ export const buildSummary = (
 	let compressed = 0;
 	let skipLarger = 0;
 	let skipLowGain = 0;
+	let skipUser = 0;
 	let errors = 0;
 	let bytesBefore = 0;
 	let bytesAfter = 0;
@@ -168,6 +170,9 @@ export const buildSummary = (
 			bytesAfter += r.bytesBefore;
 		} else if (r.status === 'skip_low_gain') {
 			skipLowGain++;
+			bytesAfter += r.bytesBefore;
+		} else if (r.status === 'skip_user') {
+			skipUser++;
 			bytesAfter += r.bytesBefore;
 		} else if (r.status === 'error') {
 			errors++;
@@ -185,7 +190,7 @@ export const buildSummary = (
 		skipPrevious: skipPreviousCount,
 		skipLarger,
 		skipLowGain,
-		skipUser: 0,
+		skipUser,
 		errors,
 		bytesBefore,
 		bytesAfter,
@@ -193,4 +198,3 @@ export const buildSummary = (
 		results,
 	};
 };
-

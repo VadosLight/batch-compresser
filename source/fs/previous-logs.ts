@@ -115,4 +115,3 @@ export const loadProcessedPathsFromLogs = async (
 
 	return {paths, logFiles};
 };
-

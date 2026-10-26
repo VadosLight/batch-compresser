@@ -87,6 +87,7 @@ export const ru = {
 	skipSmall: (n: number) => `Пропущено (маленькие): ${n}`,
 	skipCompressed: (n: number) => `Пропущено (*_compressed): ${n}`,
 	skipPrevious: (n: number) => `Пропущено (уже в логах): ${n}`,
+	skipUser: (n: number) => `Пропущено (пользователь): ${n}`,
 	skipLarger: (n: number) => `Пропущено (результат больше): ${n}`,
 	skipLowGain: (n: number) => `Пропущено (экономия < 3%): ${n}`,
 	errors: (n: number) => `Ошибки: ${n}`,
