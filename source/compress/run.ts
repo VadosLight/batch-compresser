@@ -26,6 +26,25 @@ export type ActiveJobProgress = {
 	filePercent: number;
 };
 
+/** Ascending by size so small videos start first when enabled. */
+export const orderVideosForProcessing = (
+	videos: ScannedFile[],
+	smallFirst: boolean,
+): ScannedFile[] => {
+	if (!smallFirst || videos.length < 2) {
+		return videos;
+	}
+
+	return [...videos].sort((a, b) => {
+		const bySize = a.sizeBytes - b.sizeBytes;
+		if (bySize !== 0) {
+			return bySize;
+		}
+
+		return a.path.localeCompare(b.path);
+	});
+};
+
 export type ProgressEvent = {
 	done: number;
 	total: number;

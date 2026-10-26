@@ -47,6 +47,7 @@ export const formatSettingsBlock = (settings: CompressSettings): string => {
 			`Пресет качества видео: ${settings.videoPreset}`,
 			`CRF видео: ${settings.videoCrf}`,
 			`Макс. высота видео: ${videoHeight}`,
+			`Сначала маленькие видео: ${settings.videosSmallFirst ? 'да' : 'нет'}`,
 			`Воркеры видео: ${settings.videoWorkers}`,
 		);
 	}

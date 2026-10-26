@@ -86,20 +86,36 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 				CRF: {settings.videoCrf}, высота:{' '}
 				{settings.videoMaxHeight || 'исходное'}
 			</Text>
+			<Text>
+				{ru.videosSmallFirst}: {settings.videosSmallFirst ? ru.yes : ru.no}
+			</Text>
+			<Text dimColor>{ru.videosSmallFirstHint}</Text>
 			<Select
 				items={[
 					{label: 'Пресет', value: 'preset'},
 					{label: 'CRF числом', value: 'crf'},
 					{label: 'Макс. высота', value: 'height'},
+					{
+						label: settings.videosSmallFirst
+							? 'Выключить «сначала маленькие»'
+							: 'Включить «сначала маленькие»',
+						value: 'toggle-small-first',
+					},
 					{label: '→ Далее', value: 'next'},
 				]}
 				initialValue="next"
 				onSelect={v => {
 					if (v === 'next') {
 						onNext();
-					} else {
-						setSub(v as typeof sub);
+						return;
 					}
+
+					if (v === 'toggle-small-first') {
+						patch({videosSmallFirst: !settings.videosSmallFirst});
+						return;
+					}
+
+					setSub(v as typeof sub);
 				}}
 			/>
 		</Box>

@@ -76,7 +76,7 @@ Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
 2. Media types (photo/video toggles)
 3. Min size thresholds (MB)
 4. Photo settings (format, MP, quality/preset) — skipped if photos off
-5. Video settings (CRF/preset, max height) — skipped if no ffmpeg / videos off
+5. Video settings (CRF/preset, max height, optional small-first queue) — skipped if no ffmpeg / videos off
 6. Replace vs `_compressed`, workers for enabled media, optional HDD→SSD staging, optional previous logs path
 7. Ready → scan
 
@@ -87,7 +87,7 @@ Thresholds / confirm / log dump show only settings for enabled media types.
 1. `createLogger(rootDir, settings)` — writes `=== ПАРАМЕТРЫ ===` first
 2. `scanDirectory` — recursive; classifies by extension; applies min-size, `*_compressed`, and optional previous-log skips (`fs/previous-logs.ts`)
 3. Photos: parallel (`photoWorkers`, default `cpus()-1`)
-4. Videos: parallel (`videoWorkers`, default `min(4, floor(cpus/2))`); per-file progress via `ffmpeg -progress pipe:1`
+4. Videos: optional size-ascending queue (`videosSmallFirst`); parallel (`videoWorkers`, default `min(4, floor(cpus/2))`); per-file progress via `ffmpeg -progress pipe:1`
 5. Optional **staging** (`stageToFastDisk`): copy HDD → SSD tmp → encode → **delete staged input immediately** → write result back (EXDEV-safe `moveFile`); session dir cleaned in `finally`
 6. `commitOutput` — write `.tmp*`, compare sizes, rename/copy or discard (`skip_larger`)
 7. Final summary on screen and at end of log; staging session dir cleaned in `finally`

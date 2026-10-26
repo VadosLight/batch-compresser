@@ -30,6 +30,8 @@ export type CompressSettings = {
 	videoCrf: number;
 	videoPreset: QualityPresetId;
 	videoMaxHeight: VideoMaxHeight;
+	/** Queue videos by ascending size so short/small files finish first. */
+	videosSmallFirst: boolean;
 	replaceFiles: boolean;
 	photoWorkers: number;
 	videoWorkers: number;

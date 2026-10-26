@@ -50,6 +50,9 @@ export default function ConfirmScreen({
 				<Text>
 					Видео: мин {settings.minVideoMb} МБ, CRF={settings.videoCrf}, высота=
 					{settings.videoMaxHeight || 'исх.'}
+					{settings.videosSmallFirst
+						? `, ${ru.videosSmallFirst.toLowerCase()}`
+						: ''}
 				</Text>
 			) : null}
 			{workerParts.length > 0 ? (

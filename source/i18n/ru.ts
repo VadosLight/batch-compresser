@@ -29,6 +29,9 @@ export const ru = {
 	photoQuality: 'Качество фото (1–100)',
 	videoCrf: 'CRF видео (меньше = лучше)',
 	videoHeight: 'Макс. высота видео',
+	videosSmallFirst: 'Сначала маленькие видео',
+	videosSmallFirstHint:
+		'Очередь по возрастанию размера — быстрее виден прогресс',
 	replaceFiles: 'Полная замена файлов (иначе рядом *_compressed)',
 	photoWorkers: 'Параллельных воркеров для фото',
 	videoWorkers: 'Параллельных воркеров для видео',
