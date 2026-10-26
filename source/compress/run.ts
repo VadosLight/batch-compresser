@@ -16,6 +16,7 @@ import type {
 	RunSummary,
 	ScannedFile,
 } from '../types.js';
+import {isCancelError} from './abort.js';
 import {compressPhoto} from './photo.js';
 import {compressVideo} from './video.js';
 
@@ -60,10 +61,24 @@ export type ProgressEvent = {
 	result?: FileResult;
 };
 
+export type RunControls = {
+	skipVideo: (path: string) => void;
+};
+
+export type RunCompressionHandlers = {
+	onProgress?: (event: ProgressEvent) => void;
+	onControls?: (controls: RunControls) => void;
+};
+
 export const runCompression = async (
 	settings: CompressSettings,
-	onProgress?: (event: ProgressEvent) => void,
+	handlers?: RunCompressionHandlers | ((event: ProgressEvent) => void),
 ): Promise<RunSummary> => {
+	const onProgress =
+		typeof handlers === 'function' ? handlers : handlers?.onProgress;
+	const onControls =
+		typeof handlers === 'function' ? undefined : handlers?.onControls;
+
 	const logger = await createLogger(settings.rootDir, settings);
 	const {paths: processedPaths} = await loadProcessedPathsFromLogs(
 		settings.previousLogsPath,
@@ -101,13 +116,23 @@ export const runCompression = async (
 	}
 
 	const photos = scan.toProcess.filter(f => f.kind === 'photo');
-	const videos = scan.toProcess.filter(f => f.kind === 'video');
+	const videos = orderVideosForProcessing(
+		scan.toProcess.filter(f => f.kind === 'video'),
+		settings.videosSmallFirst,
+	);
 	const total = photos.length + videos.length;
 	const results: FileResult[] = [];
 	let done = 0;
 	let bytesBefore = 0;
 	let bytesAfter = 0;
 	const active = new Map<string, ActiveJobProgress>();
+	const videoAbortControllers = new Map<string, AbortController>();
+
+	onControls?.({
+		skipVideo: (path: string) => {
+			videoAbortControllers.get(path)?.abort();
+		},
+	});
 
 	const sessionDir = settings.stageToFastDisk
 		? await createStageSession(settings.stageDir)
@@ -147,6 +172,48 @@ export const runCompression = async (
 		});
 	};
 
+	const fillBytes = async (
+		file: ScannedFile,
+		result: FileResult,
+	): Promise<FileResult> => {
+		if (result.bytesBefore !== 0) {
+			return result;
+		}
+
+		try {
+			const s = await stat(file.path);
+			return {
+				...result,
+				bytesBefore: s.size,
+				bytesAfter: result.status === 'ok' ? result.bytesAfter : s.size,
+			};
+		} catch {
+			return {
+				...result,
+				bytesBefore: file.sizeBytes,
+				bytesAfter: file.sizeBytes,
+			};
+		}
+	};
+
+	const finishResult = async (
+		file: ScannedFile,
+		result: FileResult,
+	): Promise<FileResult> => {
+		const filled = await fillBytes(file, result);
+		await logger.logResult(filled);
+		active.delete(file.path);
+		videoAbortControllers.delete(file.path);
+		done++;
+		accountResult(filled);
+		emit(file, {
+			status: 'done',
+			filePercent: 100,
+			result: filled,
+		});
+		return filled;
+	};
+
 	const handleOne = async (file: ScannedFile): Promise<FileResult> => {
 		setActive(file, file.kind === 'video' ? 'probe' : 'compress', 0);
 		emit(file, {
@@ -156,12 +223,40 @@ export const runCompression = async (
 
 		let workPath = file.path;
 		const commitPath = file.path;
+		let controller: AbortController | undefined;
+
+		if (file.kind === 'video') {
+			controller = new AbortController();
+			videoAbortControllers.set(file.path, controller);
+		}
+
+		const signal = controller?.signal;
 
 		try {
+			if (signal?.aborted) {
+				return finishResult(file, {
+					path: file.path,
+					kind: file.kind,
+					status: 'skip_user',
+					bytesBefore: file.sizeBytes,
+					bytesAfter: file.sizeBytes,
+				});
+			}
+
 			if (sessionDir) {
 				setActive(file, 'stage', 0);
 				emit(file, {status: 'stage', filePercent: 0});
 				workPath = await stageFile(file.path, sessionDir);
+				if (signal?.aborted) {
+					await cleanupStagedFile(workPath, commitPath);
+					return finishResult(file, {
+						path: file.path,
+						kind: file.kind,
+						status: 'skip_user',
+						bytesBefore: file.sizeBytes,
+						bytesAfter: file.sizeBytes,
+					});
+				}
 			}
 
 			const releaseStagedInput = async (): Promise<void> => {
@@ -186,53 +281,35 @@ export const runCompression = async (
 							filePercent: update.percent,
 						});
 					},
-					{commitPath, onEncoded: releaseStagedInput},
+					{commitPath, onEncoded: releaseStagedInput, signal},
 				);
 			}
 
-			if (result.bytesBefore === 0) {
-				try {
-					const s = await stat(file.path);
-					result = {
-						...result,
-						bytesBefore: s.size,
-						bytesAfter: result.status === 'ok' ? result.bytesAfter : s.size,
-					};
-				} catch {
-					result = {
-						...result,
-						bytesBefore: file.sizeBytes,
-						bytesAfter: file.sizeBytes,
-					};
-				}
-			}
-
-			await logger.logResult(result);
-			active.delete(file.path);
-			done++;
-			accountResult(result);
-			emit(file, {
-				status: 'done',
-				filePercent: 100,
-				result,
-			});
-			return result;
+			await cleanupStagedFile(workPath, commitPath);
+			return finishResult(file, result);
 		} catch (error) {
 			await cleanupStagedFile(workPath, commitPath);
-			const result: FileResult = {
+
+			if (isCancelError(error, signal)) {
+				return finishResult(file, {
+					path: file.path,
+					kind: file.kind,
+					status: 'skip_user',
+					bytesBefore: file.sizeBytes,
+					bytesAfter: file.sizeBytes,
+				});
+			}
+
+			return finishResult(file, {
 				path: file.path,
 				kind: file.kind,
 				status: 'error',
 				bytesBefore: file.sizeBytes,
 				bytesAfter: file.sizeBytes,
 				errorMessage: error instanceof Error ? error.message : String(error),
-			};
-			await logger.logResult(result);
-			active.delete(file.path);
-			done++;
-			accountResult(result);
-			emit(file, {status: 'done', filePercent: 100, result});
-			return result;
+			});
+		} finally {
+			videoAbortControllers.delete(file.path);
 		}
 	};
 
