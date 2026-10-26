@@ -11,7 +11,8 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 - **Videos:** system `ffmpeg` → H.264 + AAC in MP4 (CRF, max height)
 - **Output:** replace in place **or** sibling `*_compressed.*`
 - **Safety:** skip tiny files (separate MB thresholds), skip `*_compressed*`, skip if result ≥ original; **videos** also keep original if savings &lt; 3%
-- **Resume:** optional `previousLogsPath` (log file or folder) skips paths already logged as `OK` / `SKIP_LARGER` / `SKIP_LOW_GAIN`
+- **Resume:** optional `previousLogsPath` (log file or folder) skips paths already logged as `OK` / `SKIP_LARGER` / `SKIP_LOW_GAIN` / `SKIP_USER`
+- **Interactive skip:** during run, ↑↓ focus an active video, `s` + Enter aborts ffmpeg (`skip_user`); original kept; temps/staging cleaned
 - **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` in the target folder (settings header + per-file lines + summary)
 
 ## Stack
@@ -99,24 +100,26 @@ Thresholds / confirm / log dump show only settings for enabled media types.
 - Batch: `done` / `total` / `current`
 - Per file: `kind`, `status` (`probe` | `encode` | `finalize` | …), `filePercent` (videos)
 - Parallel: `activeJobs[]` — all in-flight files (RunningScreen lists each with its own bar)
+- Controls: `onControls({ skipVideo })` — AbortController per video path
 
-UI: `screens/RunningScreen.tsx`.
+UI: `screens/RunningScreen.tsx` (↑↓ / `s` / Enter confirm for video skip).
 
 ## Key domain rules
 
-| Topic              | Behavior                                                                              | Where                                     |
-| ------------------ | ------------------------------------------------------------------------------------- | ----------------------------------------- |
-| Photo MP           | Downscale only if `w*h` > target MP; keep aspect                                      | `presets.scaledSize`, `compress/photo.ts` |
-| Photo format       | `same` / `jpeg` / `webp`; HEIC etc. → JPEG when “same” needs conversion               | `compress/photo.ts`                       |
-| EXIF               | Apply orientation (`rotate()`); do not copy other EXIF                                | `compress/photo.ts`                       |
-| Video out          | Always `.mp4` H.264 + AAC; optional scale by max height                               | `compress/video.ts`                       |
-| Replace video      | May change extension; unlink old after successful write                               | `compress/write.ts`                       |
-| Alongside name     | `name_compressed.ext`                                                                 | `presets.compressedSiblingPath`           |
-| Min size `0`       | Filter off                                                                            | `presets.isBelowMinSize`                  |
-| ffmpeg missing     | Warn at start; force videos off; photos still work                                    | `app.tsx`, `ffmpeg.ts`                    |
-| Folder/file picker | macOS osascript / Windows WinForms / Linux zenity\|kdialog; `pickFolder` + `pickFile` | `fs/pick-folder.ts`                       |
-| Staging            | Copy to `stageDir` (default OS tmp), encode there, commit to original                 | `fs/stage.ts`, `compress/run.ts`          |
-| Previous logs      | Parse OK/SKIP_LARGER/SKIP_LOW_GAIN paths; skip as `skip_previous`                     | `fs/previous-logs.ts`, `scan.ts`          |
+| Topic              | Behavior                                                                              | Where                                        |
+| ------------------ | ------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Photo MP           | Downscale only if `w*h` > target MP; keep aspect                                      | `presets.scaledSize`, `compress/photo.ts`    |
+| Photo format       | `same` / `jpeg` / `webp`; HEIC etc. → JPEG when “same” needs conversion               | `compress/photo.ts`                          |
+| EXIF               | Apply orientation (`rotate()`); do not copy other EXIF                                | `compress/photo.ts`                          |
+| Video out          | Always `.mp4` H.264 + AAC; optional scale by max height                               | `compress/video.ts`                          |
+| Replace video      | May change extension; unlink old after successful write                               | `compress/write.ts`                          |
+| Alongside name     | `name_compressed.ext`                                                                 | `presets.compressedSiblingPath`              |
+| Min size `0`       | Filter off                                                                            | `presets.isBelowMinSize`                     |
+| ffmpeg missing     | Warn at start; force videos off; photos still work                                    | `app.tsx`, `ffmpeg.ts`                       |
+| Folder/file picker | macOS osascript / Windows WinForms / Linux zenity\|kdialog; `pickFolder` + `pickFile` | `fs/pick-folder.ts`                          |
+| Staging            | Copy to `stageDir` (default OS tmp), encode there, commit to original                 | `fs/stage.ts`, `compress/run.ts`             |
+| Previous logs      | Parse OK/SKIP_LARGER/SKIP_LOW_GAIN/SKIP_USER paths; skip as `skip_previous`           | `fs/previous-logs.ts`, `scan.ts`             |
+| Interactive skip   | Focus active video → confirm → abort ffmpeg → `skip_user`                             | `compress/run.ts`, `video.ts`, RunningScreen |
 
 ## Conventions for changes
 
