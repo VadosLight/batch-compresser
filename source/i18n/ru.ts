@@ -72,6 +72,8 @@ export const ru = {
 			after,
 		)}, −${pct.toFixed(1)}%)`,
 	activeJobs: 'Активных задач',
+	skipHint: '↑↓ выбор · s пропуск',
+	skipConfirm: (name: string) => `Пропустить ${name}? Enter — да · Esc — нет`,
 	fileStatus: 'Статус',
 	processing: 'Обработка…',
 	kindPhoto: 'фото',

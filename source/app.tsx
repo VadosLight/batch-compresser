@@ -62,6 +62,7 @@ export default function App({initialPath}: Props) {
 		bytesAfter: 0,
 	});
 	const [summary, setSummary] = useState<RunSummary>();
+	const [skipVideo, setSkipVideo] = useState<(path: string) => void>();
 
 	useEffect(() => {
 		void (async () => {
@@ -140,6 +141,7 @@ export default function App({initialPath}: Props) {
 
 	const startRun = async () => {
 		setScreen('running');
+		setSkipVideo(undefined);
 		setProgress({
 			done: 0,
 			total: scanCount,
@@ -149,22 +151,29 @@ export default function App({initialPath}: Props) {
 			bytesAfter: 0,
 		});
 		try {
-			const result = await runCompression(settings, event => {
-				setProgress({
-					done: event.done,
-					total: event.total,
-					current: event.current,
-					kind: event.kind,
-					status: event.status,
-					filePercent: event.filePercent,
-					activeJobs: event.activeJobs,
-					bytesBefore: event.bytesBefore,
-					bytesAfter: event.bytesAfter,
-				});
+			const result = await runCompression(settings, {
+				onControls(controls) {
+					setSkipVideo(() => controls.skipVideo);
+				},
+				onProgress(event) {
+					setProgress({
+						done: event.done,
+						total: event.total,
+						current: event.current,
+						kind: event.kind,
+						status: event.status,
+						filePercent: event.filePercent,
+						activeJobs: event.activeJobs,
+						bytesBefore: event.bytesBefore,
+						bytesAfter: event.bytesAfter,
+					});
+				},
 			});
+			setSkipVideo(undefined);
 			setSummary(result);
 			setScreen('summary');
 		} catch (error_) {
+			setSkipVideo(undefined);
 			setError(error_ instanceof Error ? error_.message : String(error_));
 			setScreen('wizard');
 		}
@@ -230,6 +239,9 @@ export default function App({initialPath}: Props) {
 				activeJobs={progress.activeJobs}
 				bytesBefore={progress.bytesBefore}
 				bytesAfter={progress.bytesAfter}
+				onSkipVideo={path => {
+					skipVideo?.(path);
+				}}
 			/>
 		);
 	}
