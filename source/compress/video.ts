@@ -3,6 +3,7 @@ import {rm} from 'node:fs/promises';
 import {execa} from 'execa';
 import {probeVideo} from '../ffmpeg.js';
 import type {CompressSettings, FileResult} from '../types.js';
+import {isCancelError} from './abort.js';
 import {parseProgressTimeSec, percentFromTime} from './ffmpeg-progress.js';
 import {commitOutput, tempPathFor, videoMinSavingsRatio} from './write.js';
 
@@ -16,6 +17,14 @@ export type CompressVideoOptions = {
 	commitPath?: string;
 	/** Called after encode finishes, before commit — e.g. delete staged input to free SSD. */
 	onEncoded?: () => Promise<void>;
+	/** AbortSignal to cancel ffmpeg (user skip). */
+	signal?: AbortSignal;
+};
+
+const throwIfAborted = (signal?: AbortSignal): void => {
+	if (signal?.aborted) {
+		throw Object.assign(new Error('aborted'), {isCanceled: true});
+	}
 };
 
 export const compressVideo = async (
@@ -31,8 +40,10 @@ export const compressVideo = async (
 	let tmp: string | undefined;
 
 	try {
+		throwIfAborted(options.signal);
 		onFileProgress?.({status: 'probe', percent: 0});
 		const probe = await probeVideo(workPath);
+		throwIfAborted(options.signal);
 		const durationSec =
 			probe.durationSec && Number.isFinite(probe.durationSec)
 				? probe.durationSec
@@ -72,9 +83,12 @@ export const compressVideo = async (
 		tmp = tempPathFor(workPath, ext);
 		args.push(tmp);
 
+		throwIfAborted(options.signal);
 		onFileProgress?.({status: 'encode', percent: 0});
 
-		const subprocess = execa('ffmpeg', args);
+		const subprocess = execa('ffmpeg', args, {
+			signal: options.signal,
+		});
 		let lastPercent = 0;
 
 		subprocess.stdout?.on('data', (chunk: Uint8Array) => {
@@ -115,6 +129,16 @@ export const compressVideo = async (
 	} catch (error) {
 		if (tmp) {
 			await rm(tmp, {force: true}).catch(() => undefined);
+		}
+
+		if (isCancelError(error, options.signal)) {
+			return {
+				path: commitPath,
+				kind: 'video',
+				status: 'skip_user',
+				bytesBefore: 0,
+				bytesAfter: 0,
+			};
 		}
 
 		return {

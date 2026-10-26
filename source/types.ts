@@ -15,6 +15,7 @@ export type FileStatus =
 	| 'skip_larger'
 	| 'skip_low_gain'
 	| 'skip_previous'
+	| 'skip_user'
 	| 'error';
 
 export type CompressSettings = {
@@ -41,7 +42,7 @@ export type CompressSettings = {
 	stageDir: string;
 	/**
 	 * Path to a previous log file or a folder with logs.
-	 * Empty = do not skip. Files with OK / SKIP_LARGER / SKIP_LOW_GAIN are skipped.
+	 * Empty = do not skip. Files with OK / SKIP_LARGER / SKIP_LOW_GAIN / SKIP_USER are skipped.
 	 */
 	previousLogsPath: string;
 };
@@ -76,4 +77,3 @@ export type RunSummary = {
 	logPath: string;
 	results: FileResult[];
 };
-
