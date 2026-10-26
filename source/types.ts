@@ -14,6 +14,7 @@ export type FileStatus =
 	| 'skip_compressed'
 	| 'skip_larger'
 	| 'skip_low_gain'
+	| 'skip_previous'
 	| 'error';
 
 export type CompressSettings = {
@@ -36,6 +37,11 @@ export type CompressSettings = {
 	stageToFastDisk: boolean;
 	/** Root for staging sessions; default is OS tmpdir/batch-compresser. */
 	stageDir: string;
+	/**
+	 * Path to a previous log file or a folder with logs.
+	 * Empty = do not skip. Files with OK / SKIP_LARGER / SKIP_LOW_GAIN are skipped.
+	 */
+	previousLogsPath: string;
 };
 
 export type ScannedFile = {
@@ -60,6 +66,7 @@ export type RunSummary = {
 	skipCompressed: number;
 	skipLarger: number;
 	skipLowGain: number;
+	skipPrevious: number;
 	errors: number;
 	bytesBefore: number;
 	bytesAfter: number;

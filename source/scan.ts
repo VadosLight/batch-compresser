@@ -45,6 +45,7 @@ export type ScanOutcome = {
 	toProcess: ScannedFile[];
 	skippedSmall: ScannedFile[];
 	skippedCompressed: ScannedFile[];
+	skippedPrevious: ScannedFile[];
 };
 
 const walk = async (dir: string): Promise<string[]> => {
@@ -68,11 +69,13 @@ export const scanDirectory = async (
 		CompressSettings,
 		'rootDir' | 'processPhotos' | 'processVideos' | 'minPhotoMb' | 'minVideoMb'
 	>,
+	processedPaths: ReadonlySet<string> = new Set(),
 ): Promise<ScanOutcome> => {
 	const allPaths = await walk(settings.rootDir);
 	const toProcess: ScannedFile[] = [];
 	const skippedSmall: ScannedFile[] = [];
 	const skippedCompressed: ScannedFile[] = [];
+	const skippedPrevious: ScannedFile[] = [];
 
 	for (const filePath of allPaths) {
 		const kind = detectKind(filePath);
@@ -106,8 +109,13 @@ export const scanDirectory = async (
 			continue;
 		}
 
+		if (processedPaths.has(path.resolve(filePath))) {
+			skippedPrevious.push(item);
+			continue;
+		}
+
 		toProcess.push(item);
 	}
 
-	return {toProcess, skippedSmall, skippedCompressed};
+	return {toProcess, skippedSmall, skippedCompressed, skippedPrevious};
 };

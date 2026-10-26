@@ -20,4 +20,5 @@ export const createDefaultSettings = (rootDir = ''): CompressSettings => ({
 	videoWorkers: defaultVideoWorkers(),
 	stageToFastDisk: false,
 	stageDir: defaultStageDir(),
+	previousLogsPath: '',
 });

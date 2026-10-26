@@ -3,6 +3,7 @@ import {Box, Text, useApp, useInput} from 'ink';
 import {runCompression, type ActiveJobProgress} from './compress/run.js';
 import {createDefaultSettings} from './defaults.js';
 import {checkFfmpeg} from './ffmpeg.js';
+import {loadProcessedPathsFromLogs} from './fs/previous-logs.js';
 import {ru} from './i18n/ru.js';
 import {scanDirectory} from './scan.js';
 import BootScreen from './screens/BootScreen.js';
@@ -27,6 +28,8 @@ type ProgressState = {
 	status?: string;
 	filePercent?: number;
 	activeJobs: ActiveJobProgress[];
+	bytesBefore: number;
+	bytesAfter: number;
 };
 
 export default function App({initialPath}: Props) {
@@ -43,11 +46,14 @@ export default function App({initialPath}: Props) {
 	const [scanCount, setScanCount] = useState(0);
 	const [skipSmall, setSkipSmall] = useState(0);
 	const [skipCompressed, setSkipCompressed] = useState(0);
+	const [skipPrevious, setSkipPrevious] = useState(0);
 	const [progress, setProgress] = useState<ProgressState>({
 		done: 0,
 		total: 0,
 		current: '',
 		activeJobs: [],
+		bytesBefore: 0,
+		bytesAfter: 0,
 	});
 	const [summary, setSummary] = useState<RunSummary>();
 
@@ -104,10 +110,14 @@ export default function App({initialPath}: Props) {
 		setScreen('scanning');
 
 		try {
-			const outcome = await scanDirectory(next);
+			const {paths: processedPaths} = await loadProcessedPathsFromLogs(
+				next.previousLogsPath,
+			);
+			const outcome = await scanDirectory(next, processedPaths);
 			setScanCount(outcome.toProcess.length);
 			setSkipSmall(outcome.skippedSmall.length);
 			setSkipCompressed(outcome.skippedCompressed.length);
+			setSkipPrevious(outcome.skippedPrevious.length);
 			setScreen('confirm');
 		} catch (error_) {
 			setError(error_ instanceof Error ? error_.message : String(error_));
@@ -117,7 +127,14 @@ export default function App({initialPath}: Props) {
 
 	const startRun = async () => {
 		setScreen('running');
-		setProgress({done: 0, total: scanCount, current: '', activeJobs: []});
+		setProgress({
+			done: 0,
+			total: scanCount,
+			current: '',
+			activeJobs: [],
+			bytesBefore: 0,
+			bytesAfter: 0,
+		});
 		try {
 			const result = await runCompression(settings, event => {
 				setProgress({
@@ -128,6 +145,8 @@ export default function App({initialPath}: Props) {
 					status: event.status,
 					filePercent: event.filePercent,
 					activeJobs: event.activeJobs,
+					bytesBefore: event.bytesBefore,
+					bytesAfter: event.bytesAfter,
 				});
 			});
 			setSummary(result);
@@ -181,6 +200,7 @@ export default function App({initialPath}: Props) {
 				scanCount={scanCount}
 				skipSmall={skipSmall}
 				skipCompressed={skipCompressed}
+				skipPrevious={skipPrevious}
 			/>
 		);
 	}
@@ -195,6 +215,8 @@ export default function App({initialPath}: Props) {
 				status={progress.status}
 				filePercent={progress.filePercent}
 				activeJobs={progress.activeJobs}
+				bytesBefore={progress.bytesBefore}
+				bytesAfter={progress.bytesAfter}
 			/>
 		);
 	}

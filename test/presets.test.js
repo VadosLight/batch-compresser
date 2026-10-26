@@ -101,13 +101,18 @@ test('buildSummary counts', t => {
 			bytesAfter: 300,
 		},
 	];
-	const summary = buildSummary(results, 2, 1, '/tmp/log');
+	const summary = buildSummary(
+		results,
+		{skipSmall: 2, skipCompressed: 1, skipPrevious: 4},
+		'/tmp/log',
+	);
 	t.is(summary.compressed, 1);
 	t.is(summary.skipLarger, 1);
 	t.is(summary.skipLowGain, 1);
 	t.is(summary.errors, 1);
 	t.is(summary.skipSmall, 2);
 	t.is(summary.skipCompressed, 1);
+	t.is(summary.skipPrevious, 4);
 	t.is(summary.bytesBefore, 2000);
 	t.is(summary.bytesAfter, 1400);
 });

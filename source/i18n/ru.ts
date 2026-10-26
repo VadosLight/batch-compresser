@@ -39,6 +39,19 @@ export const ru = {
 	stageDirHint: 'Например /tmp или путь на SSD',
 	stageHint:
 		'При файлах на HDD + SSD: включите staging и поднимите воркеры видео',
+	previousLogsPath: 'Предыдущие логи (пропуск обработанных)',
+	previousLogsHint: 'Файл .log или папка с логами; пустой путь — без пропуска',
+	previousLogsOpenFolder: 'Выбрать папку с логами…',
+	previousLogsOpenFile: 'Выбрать файл лога…',
+	previousLogsClear: 'Очистить путь',
+	previousLogsPickFolderPrompt: 'Выберите папку с предыдущими логами',
+	previousLogsPickFilePrompt: 'Выберите файл предыдущего лога',
+	previousLogsError: {
+		empty: 'Укажите путь к логам',
+		missing: 'Путь к предыдущим логам не существует',
+		unreadable: 'Нет доступа к предыдущим логам',
+		notLogsPath: 'Путь к логам должен быть файлом или папкой',
+	},
 	videoStatusStage: 'Копирование на быстрый диск',
 	next: 'Далее',
 	back: 'Назад (Esc)',
@@ -51,6 +64,10 @@ export const ru = {
 	progress: (done: number, total: number, current: string) =>
 		`Обработано ${done}/${total}: ${current}`,
 	batchProgress: (done: number, total: number) => `Готово ${done}/${total}`,
+	batchSaved: (before: number, after: number, saved: number, pct: number) =>
+		`экономия ${formatBytes(saved)} (${formatBytes(before)} → ${formatBytes(
+			after,
+		)}, −${pct.toFixed(1)}%)`,
 	activeJobs: 'Активных задач',
 	fileStatus: 'Статус',
 	processing: 'Обработка…',
@@ -66,6 +83,7 @@ export const ru = {
 	compressed: (n: number) => `Сжато: ${n}`,
 	skipSmall: (n: number) => `Пропущено (маленькие): ${n}`,
 	skipCompressed: (n: number) => `Пропущено (*_compressed): ${n}`,
+	skipPrevious: (n: number) => `Пропущено (уже в логах): ${n}`,
 	skipLarger: (n: number) => `Пропущено (результат больше): ${n}`,
 	skipLowGain: (n: number) => `Пропущено (экономия < 3%): ${n}`,
 	errors: (n: number) => `Ошибки: ${n}`,

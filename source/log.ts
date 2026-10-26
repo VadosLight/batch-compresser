@@ -21,6 +21,7 @@ export const formatSettingsBlock = (settings: CompressSettings): string => {
 		settings.megapixels === 0 ? 'без изменения' : `${settings.megapixels} Мп`;
 	const videoHeight =
 		settings.videoMaxHeight === 0 ? 'исходное' : `${settings.videoMaxHeight}p`;
+	const previousLogs = settings.previousLogsPath.trim() || 'нет';
 
 	return [
 		'=== ПАРАМЕТРЫ ===',
@@ -45,6 +46,7 @@ export const formatSettingsBlock = (settings: CompressSettings): string => {
 		...(settings.stageToFastDisk
 			? [`Папка staging: ${settings.stageDir}`]
 			: []),
+		`Предыдущие логи (пропуск): ${previousLogs}`,
 		'',
 	].join('\n');
 };
@@ -98,6 +100,7 @@ export const createLogger = async (
 			`Сжато: ${summary.compressed}`,
 			`Пропущено (маленькие): ${summary.skipSmall}`,
 			`Пропущено (*_compressed): ${summary.skipCompressed}`,
+			`Пропущено (уже в логах): ${summary.skipPrevious}`,
 			`Пропущено (результат больше): ${summary.skipLarger}`,
 			`Пропущено (экономия < 3%): ${summary.skipLowGain}`,
 			`Ошибки: ${summary.errors}`,
@@ -115,12 +118,22 @@ export const createLogger = async (
 	return {logPath, write, logResult, writeSummary};
 };
 
+export type BuildSummarySkips = {
+	skipSmall: number;
+	skipCompressed: number;
+	skipPrevious: number;
+};
+
 export const buildSummary = (
 	results: FileResult[],
-	skipSmallCount: number,
-	skipCompressedCount: number,
+	skips: BuildSummarySkips,
 	logPath: string,
 ): RunSummary => {
+	const {
+		skipSmall: skipSmallCount,
+		skipCompressed: skipCompressedCount,
+		skipPrevious: skipPreviousCount,
+	} = skips;
 	let compressed = 0;
 	let skipLarger = 0;
 	let skipLowGain = 0;
@@ -152,6 +165,7 @@ export const buildSummary = (
 		compressed,
 		skipSmall: skipSmallCount,
 		skipCompressed: skipCompressedCount,
+		skipPrevious: skipPreviousCount,
 		skipLarger,
 		skipLowGain,
 		errors,

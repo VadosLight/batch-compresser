@@ -1,5 +1,6 @@
 import {stat} from 'node:fs/promises';
 import pLimit from 'p-limit';
+import {loadProcessedPathsFromLogs} from '../fs/previous-logs.js';
 import {
 	cleanupStagedFile,
 	cleanupStageSession,
@@ -33,6 +34,10 @@ export type ProgressEvent = {
 	status?: string;
 	filePercent?: number;
 	activeJobs: ActiveJobProgress[];
+	/** Cumulative size of finished files (before compression). */
+	bytesBefore: number;
+	/** Cumulative size after finish (original size if skipped/error). */
+	bytesAfter: number;
 	result?: FileResult;
 };
 
@@ -41,7 +46,10 @@ export const runCompression = async (
 	onProgress?: (event: ProgressEvent) => void,
 ): Promise<RunSummary> => {
 	const logger = await createLogger(settings.rootDir, settings);
-	const scan = await scanDirectory(settings);
+	const {paths: processedPaths} = await loadProcessedPathsFromLogs(
+		settings.previousLogsPath,
+	);
+	const scan = await scanDirectory(settings, processedPaths);
 
 	for (const item of scan.skippedSmall) {
 		await logger.logResult({
@@ -63,11 +71,23 @@ export const runCompression = async (
 		});
 	}
 
+	for (const item of scan.skippedPrevious) {
+		await logger.logResult({
+			path: item.path,
+			kind: item.kind,
+			status: 'skip_previous',
+			bytesBefore: item.sizeBytes,
+			bytesAfter: item.sizeBytes,
+		});
+	}
+
 	const photos = scan.toProcess.filter(f => f.kind === 'photo');
 	const videos = scan.toProcess.filter(f => f.kind === 'video');
 	const total = photos.length + videos.length;
 	const results: FileResult[] = [];
 	let done = 0;
+	let bytesBefore = 0;
+	let bytesAfter = 0;
 	const active = new Map<string, ActiveJobProgress>();
 
 	const sessionDir = settings.stageToFastDisk
@@ -89,6 +109,12 @@ export const runCompression = async (
 		});
 	};
 
+	const accountResult = (result: FileResult): void => {
+		bytesBefore += result.bytesBefore;
+		bytesAfter +=
+			result.status === 'ok' ? result.bytesAfter : result.bytesBefore;
+	};
+
 	const emit = (file: ScannedFile, extra?: Partial<ProgressEvent>): void => {
 		onProgress?.({
 			done,
@@ -96,6 +122,8 @@ export const runCompression = async (
 			current: file.path,
 			kind: file.kind,
 			activeJobs: snapshotActive(),
+			bytesBefore,
+			bytesAfter,
 			...extra,
 		});
 	};
@@ -163,6 +191,7 @@ export const runCompression = async (
 			await logger.logResult(result);
 			active.delete(file.path);
 			done++;
+			accountResult(result);
 			emit(file, {
 				status: 'done',
 				filePercent: 100,
@@ -182,6 +211,7 @@ export const runCompression = async (
 			await logger.logResult(result);
 			active.delete(file.path);
 			done++;
+			accountResult(result);
 			emit(file, {status: 'done', filePercent: 100, result});
 			return result;
 		}
@@ -205,8 +235,11 @@ export const runCompression = async (
 
 	const summary = buildSummary(
 		results,
-		scan.skippedSmall.length,
-		scan.skippedCompressed.length,
+		{
+			skipSmall: scan.skippedSmall.length,
+			skipCompressed: scan.skippedCompressed.length,
+			skipPrevious: scan.skippedPrevious.length,
+		},
 		logger.logPath,
 	);
 

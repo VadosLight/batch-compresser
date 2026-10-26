@@ -8,6 +8,7 @@ type Props = {
 	scanCount: number;
 	skipSmall: number;
 	skipCompressed: number;
+	skipPrevious: number;
 };
 
 export default function ConfirmScreen({
@@ -15,6 +16,7 @@ export default function ConfirmScreen({
 	scanCount,
 	skipSmall,
 	skipCompressed,
+	skipPrevious,
 }: Props) {
 	return (
 		<Box flexDirection="column">
@@ -23,6 +25,7 @@ export default function ConfirmScreen({
 			<Text>{ru.foundFiles(scanCount)}</Text>
 			<Text dimColor>
 				{ru.skipSmall(skipSmall)} · {ru.skipCompressed(skipCompressed)}
+				{skipPrevious > 0 ? ` · ${ru.skipPrevious(skipPrevious)}` : ''}
 			</Text>
 			<Text>
 				Режим: {settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'}
@@ -44,6 +47,11 @@ export default function ConfirmScreen({
 				Staging: {settings.stageToFastDisk ? ru.yes : ru.no}
 				{settings.stageToFastDisk ? ` → ${settings.stageDir}` : ''}
 			</Text>
+			{settings.previousLogsPath.trim() ? (
+				<Text>
+					{ru.previousLogsPath}: {settings.previousLogsPath.trim()}
+				</Text>
+			) : null}
 			<Box marginTop={1} flexDirection="column">
 				<Text color="green">{ru.confirmStart}</Text>
 				<Text dimColor>{ru.confirmCancel}</Text>

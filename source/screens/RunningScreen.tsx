@@ -14,6 +14,8 @@ type Props = {
 	status?: string;
 	filePercent?: number;
 	activeJobs?: ActiveJobProgress[];
+	bytesBefore?: number;
+	bytesAfter?: number;
 };
 
 const progressBar = (percent: number, width = 16): string => {
@@ -71,6 +73,8 @@ export default function RunningScreen({
 	status,
 	filePercent,
 	activeJobs = [],
+	bytesBefore = 0,
+	bytesAfter = 0,
 }: Props) {
 	const jobs =
 		activeJobs.length > 0
@@ -86,10 +90,16 @@ export default function RunningScreen({
 			  ]
 			: [];
 
+	const saved = Math.max(0, bytesBefore - bytesAfter);
+	const savedPct = bytesBefore > 0 ? (saved / bytesBefore) * 100 : 0;
+
 	return (
 		<Box flexDirection="column">
 			<Text>
 				<Spinner type="dots" /> {ru.batchProgress(done, total)}
+				{done > 0
+					? ` · ${ru.batchSaved(bytesBefore, bytesAfter, saved, savedPct)}`
+					: ''}
 			</Text>
 			<Text>
 				{ru.activeJobs}: {jobs.length}
