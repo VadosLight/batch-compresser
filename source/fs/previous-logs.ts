@@ -7,10 +7,11 @@ export const previousDoneStatuses = new Set([
 	'OK',
 	'SKIP_LARGER',
 	'SKIP_LOW_GAIN',
+	'SKIP_USER',
 ]);
 
 const logLinePattern =
-	/^(ok|skip_larger|skip_low_gain)\s*\|\s*(?:photo|video)\s*\|\s*(.+?)\s*\|\s*before=/i;
+	/^(ok|skip_larger|skip_low_gain|skip_user)\s*\|\s*(?:photo|video)\s*\|\s*(.+?)\s*\|\s*before=/i;
 
 export type LogsPathValidation =
 	| {ok: true; resolved: string; kind: 'file' | 'directory'}
@@ -114,3 +115,4 @@ export const loadProcessedPathsFromLogs = async (
 
 	return {paths, logFiles};
 };
+

@@ -69,9 +69,11 @@ export type RunSummary = {
 	skipLarger: number;
 	skipLowGain: number;
 	skipPrevious: number;
+	skipUser: number;
 	errors: number;
 	bytesBefore: number;
 	bytesAfter: number;
 	logPath: string;
 	results: FileResult[];
 };
+

@@ -185,6 +185,7 @@ export const buildSummary = (
 		skipPrevious: skipPreviousCount,
 		skipLarger,
 		skipLowGain,
+		skipUser: 0,
 		errors,
 		bytesBefore,
 		bytesAfter,
@@ -192,3 +193,4 @@ export const buildSummary = (
 		results,
 	};
 };
+
