@@ -207,18 +207,24 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 	}
 
 	const previousLogsLabel = settings.previousLogsPath.trim() || ru.pathNotSet;
+	const showPhotoWorkers = settings.processPhotos;
+	const showVideoWorkers = settings.processVideos;
 
 	return (
 		<Box flexDirection="column">
 			<Text>
 				{ru.replaceFiles}: {settings.replaceFiles ? ru.yes : ru.no}
 			</Text>
-			<Text>
-				{ru.photoWorkers}: {settings.photoWorkers}
-			</Text>
-			<Text>
-				{ru.videoWorkers}: {settings.videoWorkers}
-			</Text>
+			{showPhotoWorkers ? (
+				<Text>
+					{ru.photoWorkers}: {settings.photoWorkers}
+				</Text>
+			) : null}
+			{showVideoWorkers ? (
+				<Text>
+					{ru.videoWorkers}: {settings.videoWorkers}
+				</Text>
+			) : null}
 			<Text>
 				{ru.stageToFastDisk}: {settings.stageToFastDisk ? ru.yes : ru.no}
 			</Text>
@@ -230,7 +236,7 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 			<Text>
 				{ru.previousLogsPath}: {previousLogsLabel}
 			</Text>
-			<Text dimColor>{ru.stageHint}</Text>
+			{showVideoWorkers ? <Text dimColor>{ru.stageHint}</Text> : null}
 			<Select
 				items={[
 					{
@@ -239,8 +245,12 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 							: 'Переключить на полную замену',
 						value: 'toggle-replace',
 					},
-					{label: 'Воркеры фото', value: 'photo-workers'},
-					{label: 'Воркеры видео', value: 'video-workers'},
+					...(showPhotoWorkers
+						? [{label: 'Воркеры фото', value: 'photo-workers' as const}]
+						: []),
+					...(showVideoWorkers
+						? [{label: 'Воркеры видео', value: 'video-workers' as const}]
+						: []),
 					{
 						label: settings.stageToFastDisk
 							? 'Выключить staging на быстрый диск'

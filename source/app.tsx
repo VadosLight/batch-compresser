@@ -13,7 +13,13 @@ import RunningScreen from './screens/RunningScreen.js';
 import ScanningScreen from './screens/ScanningScreen.js';
 import SummaryScreen from './screens/SummaryScreen.js';
 import type {CompressSettings, MediaKind, RunSummary} from './types.js';
-import {totalWizardSteps, wizardStepTitle, type Screen} from './ui/types.js';
+import {
+	nextWizardStep,
+	prevWizardStep,
+	wizardStepOrdinal,
+	wizardStepTitle,
+	type Screen,
+} from './ui/types.js';
 import Wizard from './wizard/Wizard.js';
 
 type Props = {
@@ -75,14 +81,21 @@ export default function App({initialPath}: Props) {
 		setSettings(s => ({...s, ...partial}));
 	};
 
+	const wizardCtx = {
+		processPhotos: settings.processPhotos,
+		processVideos: settings.processVideos,
+		ffmpegAvailable,
+	};
+	const stepMeta = wizardStepOrdinal(step, wizardCtx);
+
 	const goNext = () => {
 		setError(undefined);
-		setStep(s => Math.min(totalWizardSteps, s + 1));
+		setStep(s => nextWizardStep(s, wizardCtx));
 	};
 
 	const goBack = () => {
 		setError(undefined);
-		setStep(s => Math.max(1, s - 1));
+		setStep(s => prevWizardStep(s, wizardCtx));
 	};
 
 	const validateAndScan = async () => {
@@ -236,7 +249,7 @@ export default function App({initialPath}: Props) {
 			{error ? <Text color="red">{error}</Text> : null}
 			<Box marginY={1}>
 				<Text color="cyan">
-					{ru.step(step, totalWizardSteps, wizardStepTitle(step))}
+					{ru.step(stepMeta.index, stepMeta.total, wizardStepTitle(step))}
 				</Text>
 			</Box>
 			<Wizard

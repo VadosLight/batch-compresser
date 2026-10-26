@@ -23,32 +23,48 @@ export const formatSettingsBlock = (settings: CompressSettings): string => {
 		settings.videoMaxHeight === 0 ? 'исходное' : `${settings.videoMaxHeight}p`;
 	const previousLogs = settings.previousLogsPath.trim() || 'нет';
 
-	return [
+	const lines = [
 		'=== ПАРАМЕТРЫ ===',
 		`Папка: ${settings.rootDir}`,
 		`Обрабатывать фото: ${settings.processPhotos ? 'да' : 'нет'}`,
 		`Обрабатывать видео: ${settings.processVideos ? 'да' : 'нет'}`,
-		`Мин. размер фото: ${settings.minPhotoMb} МБ`,
-		`Мин. размер видео: ${settings.minVideoMb} МБ`,
-		`Формат фото: ${settings.photoFormat}`,
-		`Макс. разрешение фото: ${photoMp}`,
-		`Пресет качества фото: ${settings.photoPreset}`,
-		`Качество фото: ${settings.photoQuality}`,
-		`Пресет качества видео: ${settings.videoPreset}`,
-		`CRF видео: ${settings.videoCrf}`,
-		`Макс. высота видео: ${videoHeight}`,
+	];
+
+	if (settings.processPhotos) {
+		lines.push(
+			`Мин. размер фото: ${settings.minPhotoMb} МБ`,
+			`Формат фото: ${settings.photoFormat}`,
+			`Макс. разрешение фото: ${photoMp}`,
+			`Пресет качества фото: ${settings.photoPreset}`,
+			`Качество фото: ${settings.photoQuality}`,
+			`Воркеры фото: ${settings.photoWorkers}`,
+		);
+	}
+
+	if (settings.processVideos) {
+		lines.push(
+			`Мин. размер видео: ${settings.minVideoMb} МБ`,
+			`Пресет качества видео: ${settings.videoPreset}`,
+			`CRF видео: ${settings.videoCrf}`,
+			`Макс. высота видео: ${videoHeight}`,
+			`Воркеры видео: ${settings.videoWorkers}`,
+		);
+	}
+
+	lines.push(
 		`Режим вывода: ${
 			settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'
 		}`,
-		`Воркеры фото: ${settings.photoWorkers}`,
-		`Воркеры видео: ${settings.videoWorkers}`,
 		`Staging на быстрый диск: ${settings.stageToFastDisk ? 'да' : 'нет'}`,
-		...(settings.stageToFastDisk
-			? [`Папка staging: ${settings.stageDir}`]
-			: []),
-		`Предыдущие логи (пропуск): ${previousLogs}`,
-		'',
-	].join('\n');
+	);
+
+	if (settings.stageToFastDisk) {
+		lines.push(`Папка staging: ${settings.stageDir}`);
+	}
+
+	lines.push(`Предыдущие логи (пропуск): ${previousLogs}`, '');
+
+	return lines.join('\n');
 };
 
 export const createLogger = async (

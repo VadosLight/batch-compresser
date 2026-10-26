@@ -18,6 +18,15 @@ export default function ConfirmScreen({
 	skipCompressed,
 	skipPrevious,
 }: Props) {
+	const workerParts: string[] = [];
+	if (settings.processPhotos) {
+		workerParts.push(`фото ${settings.photoWorkers}`);
+	}
+
+	if (settings.processVideos) {
+		workerParts.push(`видео ${settings.videoWorkers}`);
+	}
+
 	return (
 		<Box flexDirection="column">
 			<Text bold>{ru.confirmTitle}</Text>
@@ -30,19 +39,22 @@ export default function ConfirmScreen({
 			<Text>
 				Режим: {settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'}
 			</Text>
-			<Text>
-				Фото: {settings.processPhotos ? ru.on : ru.off}, мин{' '}
-				{settings.minPhotoMb} МБ, {settings.megapixels || '∞'} Мп, q=
-				{settings.photoQuality}
-			</Text>
-			<Text>
-				Видео: {settings.processVideos ? ru.on : ru.off}, мин{' '}
-				{settings.minVideoMb} МБ, CRF={settings.videoCrf}, высота=
-				{settings.videoMaxHeight || 'исх.'}
-			</Text>
-			<Text>
-				Воркеры: фото {settings.photoWorkers}, видео {settings.videoWorkers}
-			</Text>
+			{settings.processPhotos ? (
+				<Text>
+					Фото: мин {settings.minPhotoMb} МБ, {settings.megapixels || '∞'} Мп,
+					q=
+					{settings.photoQuality}
+				</Text>
+			) : null}
+			{settings.processVideos ? (
+				<Text>
+					Видео: мин {settings.minVideoMb} МБ, CRF={settings.videoCrf}, высота=
+					{settings.videoMaxHeight || 'исх.'}
+				</Text>
+			) : null}
+			{workerParts.length > 0 ? (
+				<Text>Воркеры: {workerParts.join(', ')}</Text>
+			) : null}
 			<Text>
 				Staging: {settings.stageToFastDisk ? ru.yes : ru.no}
 				{settings.stageToFastDisk ? ` → ${settings.stageDir}` : ''}

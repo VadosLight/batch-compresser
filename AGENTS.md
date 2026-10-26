@@ -75,10 +75,12 @@ Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
 1. Path (validate + optional OS folder picker)
 2. Media types (photo/video toggles)
 3. Min size thresholds (MB)
-4. Photo settings (format, MP, quality/preset)
+4. Photo settings (format, MP, quality/preset) — skipped if photos off
 5. Video settings (CRF/preset, max height) — skipped if no ffmpeg / videos off
-6. Replace vs `_compressed`, photo/video workers, optional HDD→SSD staging, optional previous logs path
+6. Replace vs `_compressed`, workers for enabled media, optional HDD→SSD staging, optional previous logs path
 7. Ready → scan
+
+Thresholds / confirm / log dump show only settings for enabled media types.
 
 ### Compression pipeline
 

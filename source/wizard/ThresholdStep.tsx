@@ -12,6 +12,8 @@ export default function ThresholdStep({
 }: WizardNavProps) {
 	const [mode, setMode] = useState<'menu' | 'photo' | 'video'>('menu');
 	const [draft, setDraft] = useState('');
+	const showPhoto = settings.processPhotos;
+	const showVideo = settings.processVideos;
 
 	if (mode === 'photo' || mode === 'video') {
 		return (
@@ -39,15 +41,26 @@ export default function ThresholdStep({
 		);
 	}
 
+	const summaryParts: string[] = [];
+	if (showPhoto) {
+		summaryParts.push(`Фото ≥ ${settings.minPhotoMb} МБ`);
+	}
+
+	if (showVideo) {
+		summaryParts.push(`Видео ≥ ${settings.minVideoMb} МБ`);
+	}
+
 	return (
 		<Box flexDirection="column">
-			<Text>
-				Фото ≥ {settings.minPhotoMb} МБ · Видео ≥ {settings.minVideoMb} МБ
-			</Text>
+			<Text>{summaryParts.join(' · ') || '—'}</Text>
 			<Select
 				items={[
-					{label: 'Изменить мин. фото', value: 'photo'},
-					{label: 'Изменить мин. видео', value: 'video'},
+					...(showPhoto
+						? [{label: 'Изменить мин. фото', value: 'photo' as const}]
+						: []),
+					...(showVideo
+						? [{label: 'Изменить мин. видео', value: 'video' as const}]
+						: []),
 					{label: '→ Далее', value: 'next'},
 				]}
 				initialValue="next"

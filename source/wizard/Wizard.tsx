@@ -1,6 +1,4 @@
 import React from 'react';
-import {Box, Text} from 'ink';
-import Select from '../components/Select.js';
 import type {CompressSettings} from '../types.js';
 import type {PatchSettings} from '../ui/types.js';
 import MediaTypesStep from './MediaTypesStep.js';
@@ -60,23 +58,11 @@ export default function Wizard({
 		return <ThresholdStep settings={settings} patch={patch} onNext={onNext} />;
 	}
 
-	if (step === 4) {
+	if (step === 4 && settings.processPhotos) {
 		return <PhotoStep settings={settings} patch={patch} onNext={onNext} />;
 	}
 
-	if (step === 5) {
-		if (!ffmpegAvailable || !settings.processVideos) {
-			return (
-				<Box flexDirection="column">
-					<Text dimColor>Видео отключено — пропуск настроек.</Text>
-					<Select
-						items={[{label: '→ Далее', value: 'next'}]}
-						onSelect={onNext}
-					/>
-				</Box>
-			);
-		}
-
+	if (step === 5 && settings.processVideos && ffmpegAvailable) {
 		return <VideoStep settings={settings} patch={patch} onNext={onNext} />;
 	}
 
@@ -84,5 +70,10 @@ export default function Wizard({
 		return <OutputStep settings={settings} patch={patch} onNext={onNext} />;
 	}
 
-	return <ReadyStep onBack={onBack} onFinish={onFinish} />;
+	if (step === 7) {
+		return <ReadyStep onBack={onBack} onFinish={onFinish} />;
+	}
+
+	// Disabled media step — navigation should have skipped it; advance as fallback.
+	return null;
 }
