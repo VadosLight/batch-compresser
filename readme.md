@@ -58,3 +58,5 @@ node dist/cli.js --path ~/Pictures
 npm run build
 npm test
 ```
+
+![example](docs/assets/example-1.png)
