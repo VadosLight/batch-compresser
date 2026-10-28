@@ -16,6 +16,7 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 - **Runtime video workers:** `[` / `]` change concurrency mid-run (drain on decrease — no abort); loadavg/RAM advice on screen (manual only, no auto-tune)
 - **ffmpeg missing:** offer confirmed install via brew/apt/dnf/pacman/winget/choco; Esc = photos only
 - **Open folder:** during run, `o` opens the original video’s parent folder; labels show `parent/file`
+- **Celebratory summary:** end screen title/banner by run duration (quick→epic); shows elapsed time + savings
 - **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` in the target folder (settings header + per-file lines + summary)
 
 ## Stack
@@ -129,6 +130,7 @@ UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers / `o` folde
 | Interactive skip      | Focus active video → confirm → abort ffmpeg → `skip_user`                             | `compress/run.ts`, `video.ts`, RunningScreen                   |
 | Runtime video workers | `[`/`]` adjust pool; drain on decrease; load/RAM advice (no auto)                     | `compress/concurrency.ts`, `resource-advice.ts`, RunningScreen |
 | Open video folder     | `o` opens original parent dir; job label `parent/basename`                            | `fs/open-path.ts`, `ui/job-label.ts`, RunningScreen            |
+| Celebratory summary   | Duration tier greeting + elapsed/savings stats on SummaryScreen                       | `ui/summary-celebration.ts`, SummaryScreen, `log.ts`           |
 
 ## Conventions for changes
 

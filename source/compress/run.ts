@@ -84,6 +84,7 @@ export const runCompression = async (
 	settings: CompressSettings,
 	handlers?: RunCompressionHandlers | ((event: ProgressEvent) => void),
 ): Promise<RunSummary> => {
+	const startedAt = Date.now();
 	const onProgress =
 		typeof handlers === 'function' ? handlers : handlers?.onProgress;
 	const onControls =
@@ -387,6 +388,7 @@ export const runCompression = async (
 			skipPrevious: scan.skippedPrevious.length,
 		},
 		logger.logPath,
+		Date.now() - startedAt,
 	);
 
 	summary.found = total;

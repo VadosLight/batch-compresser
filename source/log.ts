@@ -2,6 +2,7 @@ import {appendFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {formatBytes} from './i18n/ru.js';
 import type {CompressSettings, FileResult, RunSummary} from './types.js';
+import {formatDuration} from './ui/summary-celebration.js';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -125,6 +126,7 @@ export const createLogger = async (
 			`Размер: ${formatBytes(summary.bytesBefore)} → ${formatBytes(
 				summary.bytesAfter,
 			)} (экономия ${pct.toFixed(1)}%)`,
+			`Длительность: ${formatDuration(summary.elapsedMs)}`,
 			`Завершено: ${new Date().toISOString()}`,
 			'',
 		].join('\n');
@@ -146,6 +148,7 @@ export const buildSummary = (
 	results: FileResult[],
 	skips: BuildSummarySkips,
 	logPath: string,
+	elapsedMs = 0,
 ): RunSummary => {
 	const {
 		skipSmall: skipSmallCount,
@@ -194,6 +197,7 @@ export const buildSummary = (
 		errors,
 		bytesBefore,
 		bytesAfter,
+		elapsedMs,
 		logPath,
 		results,
 	};

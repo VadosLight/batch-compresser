@@ -74,6 +74,8 @@ export type RunSummary = {
 	errors: number;
 	bytesBefore: number;
 	bytesAfter: number;
+	/** Wall-clock duration of the compression run. */
+	elapsedMs: number;
 	logPath: string;
 	results: FileResult[];
 };

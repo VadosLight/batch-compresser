@@ -99,6 +99,29 @@ export const ru = {
 	videoStatusFinalize: 'Запись результата',
 	videoStatusDone: 'Готово',
 	summaryTitle: 'Сводка',
+	celebrationTitle: {
+		quick: 'Быстро и чисто',
+		standard: 'Готово!',
+		long: 'Долгая сессия позади',
+		marathon: 'Почти сутки за станком — заслуженный отдых',
+		epic: 'Выдержали марафон!',
+	},
+	celebrationSubtitle: (
+		_tier: string,
+		compressed: number,
+		elapsedLabel: string,
+		savedLabel: string,
+	) => `${compressed} сжато за ${elapsedLabel} · освобождено ${savedLabel}`,
+	summaryStats: (parts: {
+		elapsedLabel: string;
+		compressed: number;
+		before: string;
+		after: string;
+		pct: number;
+	}) =>
+		`${parts.elapsedLabel} · сжато ${parts.compressed} · ${parts.before} → ${
+			parts.after
+		} (−${parts.pct.toFixed(1)}%)`,
 	logPath: (p: string) => `Лог: ${p}`,
 	compressed: (n: number) => `Сжато: ${n}`,
 	skipSmall: (n: number) => `Пропущено (маленькие): ${n}`,

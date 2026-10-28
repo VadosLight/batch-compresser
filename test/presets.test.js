@@ -123,4 +123,15 @@ test('buildSummary counts', t => {
 	t.is(summary.skipPrevious, 4);
 	t.is(summary.bytesBefore, 2400);
 	t.is(summary.bytesAfter, 1800);
+	t.is(summary.elapsedMs, 0);
+});
+
+test('buildSummary stores elapsedMs', t => {
+	const summary = buildSummary(
+		[],
+		{skipSmall: 0, skipCompressed: 0, skipPrevious: 0},
+		'/tmp/log',
+		12_345,
+	);
+	t.is(summary.elapsedMs, 12_345);
 });
