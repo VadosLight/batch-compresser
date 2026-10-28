@@ -1,0 +1,27 @@
+# Batch Compresser
+
+> Terminal app that batch-compresses photos and videos in a folder. Interactive wizard (Ink TUI). Does not keep results that are larger than the original.
+
+This file helps language models navigate the project. Prefer linked docs over guessing.
+
+## User docs
+
+- [README](readme.md): short end-user guide (run, ffmpeg, hotkeys)
+- [Example screenshot](docs/assets/example-1.png)
+
+## For coding agents
+
+- [AGENTS.md](AGENTS.md): architecture (MVP Presenter), stack, conventions, where to change what
+
+## Quick facts
+
+- Entry: `npm start` → `dist/tui/cli.js` (`source/tui/cli.tsx`)
+- Domain: `source/core/` (no React). UI + adapters: `source/tui/`
+- Photos: `sharp`. Videos: system `ffmpeg` only (never the npm `ffmpeg` package)
+- UI language: OS locale via `os-locale` — `ru*` → Russian, else English (`source/tui/i18n/`)
+- Logs: `batch-compresser-*.log` in the target folder; EN settings/summary keys; resume from previous logs
+- License: MIT (see `package.json`)
+
+## Optional
+
+- [AGENTS.md](AGENTS.md): full agent guide (tests, ports, screen flow)
