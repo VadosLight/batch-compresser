@@ -25,7 +25,8 @@ Architecture is **MVP**: `SessionPresenter` owns the session FSM; Ink is a thin 
 
 | Layer       | Choice                                                                          |
 | ----------- | ------------------------------------------------------------------------------- |
-| Runtime     | Node ≥ 16, ESM (`"type": "module"`)                                             |
+| Runtime     | Node ≥ 18, ESM (`"type": "module"`)                                             |
+| MCP         | `@modelcontextprotocol/sdk` stdio (`source/mcp/`, bin `batch-compresser-mcp`)   |
 | Language    | TypeScript (`rootDir: ./source`, `outDir: dist`)                                |
 | Layout      | `source/core/**` (domain) + `source/tui/**` (Ink View + adapters)               |
 | TUI         | Ink 4 + React 18                                                                |
@@ -44,11 +45,16 @@ Architecture is **MVP**: `SessionPresenter` owns the session FSM; Ink is a thin 
 npm install
 npm run build          # tsc → dist/
 npm start              # node dist/tui/cli.js
+npm run mcp            # node dist/mcp/cli.js (stdio MCP)
 npm test               # prettier + xo + build + ava
 npm run dev            # tsc --watch
 ```
 
-Entry: `source/tui/cli.tsx` → `dist/tui/cli.js` (bin).
+Bins: `batch-compresser` → `dist/tui/cli.js`; `batch-compresser-mcp` → `dist/mcp/cli.js`.
+
+### MCP
+
+Headless client of `SessionPresenter` (`source/mcp/`). Tools mirror session commands; compression starts in the background (`start_compression` + `session_status` / `await_completion`). Do not log to stdout from the MCP process (JSON-RPC). Env `BATCH_COMPRESSER_PATH` sets initial folder.
 
 ## Architecture
 
@@ -56,14 +62,12 @@ Entry: `source/tui/cli.tsx` → `dist/tui/cli.js` (bin).
 tui/cli.tsx
  └─ tui/wire.ts              # Node AppPorts + SessionPresenter
  └─ tui/App.tsx              # subscribe VM; keys → presenter commands
-      ├─ screens/* / wizard/*
-      ├─ i18n/ru.ts
-      └─ adapters/*          # FfmpegPort / FsPort / ProcessPort impls
+mcp/cli.ts                   # stdio MCP over same Presenter + ports
+ └─ mcp/server.ts / session.ts
 core/app/SessionPresenter.ts # FSM: boot → … → summary
 core/app/view-model.ts       # AppViewModel
 core/ports/                  # FfmpegPort, FsPort, ProcessPort
 core/compress/               # run, photo, video, write, …
-core/scan.ts, log.ts, …
 ```
 
 ### Ports
@@ -116,6 +120,7 @@ Wizard steps (see `core/wizard-nav.ts` + `tui/ui/wizard-titles.ts`):
 | ---------------------- | -------------------------------------------------------------------------------- |
 | Session FSM / commands | `core/app/SessionPresenter.ts`, `view-model.ts`                                  |
 | Ports / adapters       | `core/ports/*`, `tui/adapters/*`, `tui/wire.ts`                                  |
+| MCP tools / resources  | `mcp/server.ts`, `mcp/session.ts`, `mcp/cli.ts`                                  |
 | New CLI flag           | `tui/cli.tsx`                                                                    |
 | Default settings       | `core/defaults.ts`, `presets.ts`                                                 |
 | Log format             | `core/log.ts`                                                                    |

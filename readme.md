@@ -51,3 +51,16 @@ winget install --id Gyan.FFmpeg -e
 - `o` — открыть папку с файлом
 
 В конце — сводка и лог в той же папке.
+
+## MCP (для ИИ-агентов)
+
+Тот же движок можно вызывать из Cursor и других клиентов через Model Context Protocol:
+
+```bash
+npm run build
+npm run mcp
+```
+
+В конфиге MCP (stdio): команда `node` и аргумент путь к `dist/mcp/cli.js` в этом репозитории (или `batch-compresser-mcp` после `npm link`).
+
+Опционально: `BATCH_COMPRESSER_PATH` — начальная папка. Подробности для агентов — в `llms.txt` и `AGENTS.md`.
