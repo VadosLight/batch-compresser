@@ -1,4 +1,4 @@
-# Batch Compresser
+# Batch Compressor
 
 Сжимает фото и видео в выбранной папке — прямо в терминале, по шагам.
 
@@ -61,6 +61,6 @@ npm run build
 npm run mcp
 ```
 
-В конфиге MCP (stdio): команда `node` и аргумент путь к `dist/mcp/cli.js` в этом репозитории (или `batch-compresser-mcp` после `npm link`).
+В конфиге MCP (stdio): команда `node` и аргумент путь к `dist/mcp/cli.js` в этом репозитории (или `batch-compressor-mcp` после `npm link`).
 
 Опционально: `BATCH_COMPRESSER_PATH` — начальная папка. Подробности для агентов — в `llms.txt` и `AGENTS.md`.

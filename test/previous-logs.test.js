@@ -16,7 +16,7 @@ test('previousDoneStatuses includes handled outcomes', t => {
 
 test('parseProcessedPathsFromLogText extracts resolved paths', t => {
 	const sample = `
-Batch Compresser log
+Batch Compressor log
 === ФАЙЛЫ ===
 OK | photo | /tmp/album/a.jpg | before=1000 (1.0 КБ) | after=400 (400 Б)
 SKIP_LARGER | video | /tmp/album/b.mp4 | before=2000 (2.0 КБ) | after=2000 (2.0 КБ)

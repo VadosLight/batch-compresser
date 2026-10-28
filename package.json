@@ -1,10 +1,10 @@
 {
-	"name": "batch-compresser",
+	"name": "batch-compressor",
 	"version": "0.0.0",
 	"license": "MIT",
 	"bin": {
-		"batch-compresser": "dist/tui/cli.js",
-		"batch-compresser-mcp": "dist/mcp/cli.js"
+		"batch-compressor": "dist/tui/cli.js",
+		"batch-compressor-mcp": "dist/mcp/cli.js"
 	},
 	"type": "module",
 	"engines": {

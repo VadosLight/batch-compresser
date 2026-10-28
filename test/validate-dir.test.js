@@ -13,7 +13,7 @@ test('validateDirectory rejects empty', async t => {
 });
 
 test('validateDirectory rejects missing', async t => {
-	const result = await validateDirectory('/no/such/dir/batch-compresser');
+	const result = await validateDirectory('/no/such/dir/batch-compressor');
 	t.false(result.ok);
 	if (!result.ok) {
 		t.is(result.reason, 'missing');

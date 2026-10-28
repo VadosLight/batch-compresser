@@ -1,4 +1,4 @@
-# AGENTS.md — batch-compresser
+# AGENTS.md — batch-compressor
 
 Guide for humans and AI agents working on this repo. Prefer this file over guessing from chat history.
 
@@ -19,14 +19,14 @@ Architecture is **MVP**: `SessionPresenter` owns the session FSM; Ink is a thin 
 - **ffmpeg missing:** offer confirmed install via brew/apt/dnf/pacman/winget/choco; Esc = photos only
 - **Open folder:** during run, `o` opens the original video’s parent folder; labels show `parent/file`
 - **Celebratory summary:** core computes `durationTier`; TUI picks Russian title/banner
-- **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` — English `=== SETTINGS ===` / `=== SUMMARY ===` keys; per-file lines stay `STATUS | kind | path | …` (resume-safe)
+- **Log:** `batch-compressor-YYYYMMDD-HHmmss.log` — English `=== SETTINGS ===` / `=== SUMMARY ===` keys; per-file lines stay `STATUS | kind | path | …` (resume-safe)
 
 ## Stack
 
 | Layer       | Choice                                                                          |
 | ----------- | ------------------------------------------------------------------------------- |
 | Runtime     | Node ≥ 18, ESM (`"type": "module"`)                                             |
-| MCP         | `@modelcontextprotocol/sdk` stdio (`source/mcp/`, bin `batch-compresser-mcp`)   |
+| MCP         | `@modelcontextprotocol/sdk` stdio (`source/mcp/`, bin `batch-compressor-mcp`)   |
 | Language    | TypeScript (`rootDir: ./source`, `outDir: dist`)                                |
 | Layout      | `source/core/**` (domain) + `source/tui/**` (Ink View + adapters)               |
 | TUI         | Ink 4 + React 18                                                                |
@@ -50,7 +50,7 @@ npm test               # prettier + xo + build + ava
 npm run dev            # tsc --watch
 ```
 
-Bins: `batch-compresser` → `dist/tui/cli.js`; `batch-compresser-mcp` → `dist/mcp/cli.js`.
+Bins: `batch-compressor` → `dist/tui/cli.js`; `batch-compressor-mcp` → `dist/mcp/cli.js`.
 
 ### MCP
 

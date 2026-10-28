@@ -66,7 +66,7 @@ test('detectKind', t => {
 
 test('makeLogFileName shape', t => {
 	const name = makeLogFileName(new Date('2026-10-25T12:34:56'));
-	t.regex(name, /^batch-compresser-\d{8}-\d{6}-\d{3}\.log$/);
+	t.regex(name, /^batch-compressor-\d{8}-\d{6}-\d{3}\.log$/);
 });
 
 test('buildSummary counts', t => {

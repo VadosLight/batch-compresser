@@ -45,7 +45,7 @@ export type CompressSettings = {
 	videoWorkers: number;
 	/** Copy source to fast disk (SSD tmp) before encode, then write result back. */
 	stageToFastDisk: boolean;
-	/** Root for staging sessions; default is OS tmpdir/batch-compresser. */
+	/** Root for staging sessions; default is OS tmpdir/batch-compressor. */
 	stageDir: string;
 	/**
 	 * Path to a previous log file or a folder with logs.

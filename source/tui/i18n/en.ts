@@ -11,7 +11,7 @@ const byteUnits = {
 const fb = (n: number): string => formatBytesWith(n, byteUnits);
 
 export const en: Messages = {
-	appTitle: 'Batch Compresser — batch photo & video compression',
+	appTitle: 'Batch Compressor — batch photo & video compression',
 	ffmpegOk: 'ffmpeg found',
 	ffmpegMissing: 'ffmpeg was not found in PATH.',
 	ffmpegOnlyPhotos: 'Continue with photos only',
@@ -236,14 +236,14 @@ export const en: Messages = {
 	zenityAllFilter: 'All files | *',
 	cliHelp: `
 	Usage
-	  $ batch-compresser
+	  $ batch-compressor
 
 	Options
 	  --path, -p  Initial folder path
 
 	Examples
-	  $ batch-compresser
-	  $ batch-compresser --path ~/Pictures
+	  $ batch-compressor
+	  $ batch-compressor --path ~/Pictures
 `,
 	byteUnits,
 	durationUnits: {

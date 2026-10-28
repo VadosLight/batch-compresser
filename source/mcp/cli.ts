@@ -14,7 +14,7 @@ try {
 	const server = createMcpServer(session);
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
-	console.error('batch-compresser MCP server on stdio');
+	console.error('batch-compressor MCP server on stdio');
 } catch (error: unknown) {
 	console.error(error instanceof Error ? error.message : String(error));
 	process.exitCode = 1;

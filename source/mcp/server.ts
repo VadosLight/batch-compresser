@@ -24,7 +24,7 @@ const wrap = async (
 
 export const createMcpServer = (session: McpSession): McpServer => {
 	const server = new McpServer({
-		name: 'batch-compresser',
+		name: 'batch-compressor',
 		version: '0.0.0',
 	});
 
@@ -187,7 +187,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 
 	server.registerResource(
 		'session',
-		'batch-compresser://session',
+		'batch-compressor://session',
 		{
 			title: 'Live session',
 			description:
@@ -197,7 +197,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 		async () => ({
 			contents: [
 				{
-					uri: 'batch-compresser://session',
+					uri: 'batch-compressor://session',
 					mimeType: 'application/json',
 					text: JSON.stringify(sessionPayload(session.getViewModel()), null, 2),
 				},
@@ -207,7 +207,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 
 	server.registerResource(
 		'summary',
-		'batch-compresser://summary',
+		'batch-compressor://summary',
 		{
 			title: 'Run summary',
 			description:
@@ -219,7 +219,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 			return {
 				contents: [
 					{
-						uri: 'batch-compresser://summary',
+						uri: 'batch-compressor://summary',
 						mimeType: 'application/json',
 						text: JSON.stringify(
 							summary
@@ -240,7 +240,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 
 	server.registerResource(
 		'log',
-		'batch-compresser://log',
+		'batch-compressor://log',
 		{
 			title: 'Session log file',
 			description: 'Contents of summary.logPath after a completed run.',
@@ -252,7 +252,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 				return {
 					contents: [
 						{
-							uri: 'batch-compresser://log',
+							uri: 'batch-compressor://log',
 							mimeType: 'text/plain',
 							text: '',
 						},
@@ -264,7 +264,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 			return {
 				contents: [
 					{
-						uri: 'batch-compresser://log',
+						uri: 'batch-compressor://log',
 						mimeType: 'text/plain',
 						text,
 					},
@@ -298,7 +298,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 					content: {
 						type: 'text',
 						text: [
-							'Compress media with the batch-compresser MCP tools.',
+							'Compress media with the batch-compressor MCP tools.',
 							`Folder: ${folder}`,
 							`Photos: ${photos ?? 'yes'}`,
 							`Videos: ${videos ?? 'yes'}`,
@@ -310,7 +310,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 							'4. scan — check scan.count on confirm',
 							'5. start_compression',
 							'6. Poll session_status or await_completion until screen is summary',
-							'7. Read batch-compresser://summary or batch-compresser://log',
+							'7. Read batch-compressor://summary or batch-compressor://log',
 						].join('\n'),
 					},
 				},

@@ -5,7 +5,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 export const defaultStageDir = (): string =>
-	path.join(tmpdir(), 'batch-compresser');
+	path.join(tmpdir(), 'batch-compressor');
 
 export const createStageSession = async (
 	stageRoot: string,

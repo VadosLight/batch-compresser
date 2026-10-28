@@ -134,10 +134,10 @@ test('App renders wizard after boot when ffmpeg is available', async t => {
 	const frame = await waitForFrame(
 		instance,
 		text =>
-			text.includes('Batch Compresser') &&
+			text.includes('Batch Compressor') &&
 			(text.includes('Шаг') || text.includes('Step')),
 	);
-	t.true(frame.includes('Batch Compresser'));
+	t.true(frame.includes('Batch Compressor'));
 	t.true(frame.includes('Шаг') || frame.includes('Step'));
 	t.is(presenter.getViewModel().screen, 'wizard');
 	instance.unmount();

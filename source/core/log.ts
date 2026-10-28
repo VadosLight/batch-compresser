@@ -14,7 +14,7 @@ export const makeLogFileName = (date = new Date()): string => {
 	const min = pad(date.getMinutes());
 	const s = pad(date.getSeconds());
 	const ms = String(date.getMilliseconds()).padStart(3, '0');
-	return `batch-compresser-${y}${m}${d}-${h}${min}${s}-${ms}.log`;
+	return `batch-compressor-${y}${m}${d}-${h}${min}${s}-${ms}.log`;
 };
 
 export const formatSettingsBlock = (settings: CompressSettings): string => {
@@ -74,7 +74,7 @@ export const createLogger = async (
 ) => {
 	const logPath = path.join(rootDir, makeLogFileName());
 	const header = [
-		'Batch Compresser log',
+		'Batch Compressor log',
 		`Started: ${new Date().toISOString()}`,
 		'',
 		formatSettingsBlock(settings),
