@@ -80,7 +80,8 @@ export const ru = {
 			after,
 		)}, −${pct.toFixed(1)}%)`,
 	activeJobs: 'Активных задач',
-	skipHint: '↑↓ выбор · s пропуск · [ ] воркеры',
+	skipHint: '↑↓ выбор · s пропуск · [ ] воркеры · o папка',
+	openFolderFailed: 'Не удалось открыть папку',
 	skipConfirm: (name: string) => `Пропустить ${name}? Enter — да · Esc — нет`,
 	videoWorkersLive: (n: number) => `Воркеры видео: ${n}`,
 	resourceLoad: (load1: number, cpuCount: number) =>

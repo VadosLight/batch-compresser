@@ -1,10 +1,10 @@
-import path from 'node:path';
 import React, {useEffect, useState} from 'react';
 import {Box, Text, useInput} from 'ink';
 import Spinner from 'ink-spinner';
 import type {ActiveJobProgress, ProgressEvent} from '../compress/run.js';
 import {ru} from '../i18n/ru.js';
 import type {MediaKind} from '../types.js';
+import {formatJobLabel} from '../ui/job-label.js';
 
 type ResourceAdvice = NonNullable<ProgressEvent['resourceAdvice']>;
 
@@ -22,6 +22,8 @@ type Props = {
 	resourceAdvice?: ResourceAdvice;
 	onSkipVideo?: (path: string) => void;
 	onSetVideoWorkers?: (n: number) => void;
+	onOpenFolder?: (path: string) => void;
+	openFolderError?: string;
 };
 
 const progressBar = (percent: number, width = 16): string => {
@@ -69,8 +71,6 @@ const statusLabel = (
 	return ru.processing;
 };
 
-const shortName = (filePath: string): string => path.basename(filePath);
-
 const adviceLabel = (advice: ResourceAdvice['advice']): string => {
 	switch (advice) {
 		case 'increase': {
@@ -101,6 +101,8 @@ export default function RunningScreen({
 	resourceAdvice,
 	onSkipVideo,
 	onSetVideoWorkers,
+	onOpenFolder,
+	openFolderError,
 }: Props) {
 	const jobs =
 		activeJobs.length > 0
@@ -175,6 +177,11 @@ export default function RunningScreen({
 
 		if ((input === 's' || input === 'S') && focusedPath) {
 			setConfirmSkip(true);
+			return;
+		}
+
+		if ((input === 'o' || input === 'O') && focusedPath) {
+			onOpenFolder?.(focusedPath);
 		}
 	});
 
@@ -206,8 +213,11 @@ export default function RunningScreen({
 			{videoJobs.length > 0 || showWorkers ? (
 				<Text dimColor>{ru.skipHint}</Text>
 			) : null}
+			{openFolderError ? <Text color="red">{openFolderError}</Text> : null}
 			{confirmSkip && focusedPath ? (
-				<Text color="yellow">{ru.skipConfirm(shortName(focusedPath))}</Text>
+				<Text color="yellow">
+					{ru.skipConfirm(formatJobLabel(focusedPath))}
+				</Text>
 			) : null}
 			{jobs.map(job => {
 				const focused = job.kind === 'video' && job.path === focusedPath;
@@ -215,7 +225,7 @@ export default function RunningScreen({
 					<Box key={job.path} flexDirection="column" marginTop={1}>
 						<Text color={focused ? 'yellow' : undefined}>
 							{focused ? '> ' : '  '}
-							{shortName(job.path)} — {statusLabel(job.kind, job.status)}
+							{formatJobLabel(job.path)} — {statusLabel(job.kind, job.status)}
 							{job.kind === 'video'
 								? ` (${ru.kindVideo})`
 								: ` (${ru.kindPhoto})`}

@@ -12,6 +12,7 @@ import {
 	installFfmpeg,
 	type FfmpegInstallPlan,
 } from './ffmpeg-install.js';
+import {openContainingFolder} from './fs/open-path.js';
 import {loadProcessedPathsFromLogs} from './fs/previous-logs.js';
 import {ru} from './i18n/ru.js';
 import {scanDirectory} from './scan.js';
@@ -81,6 +82,7 @@ export default function App({initialPath}: Props) {
 	const [skipVideo, setSkipVideo] = useState<(path: string) => void>();
 	const [adjustVideoWorkers, setAdjustVideoWorkers] =
 		useState<(n: number) => void>();
+	const [openFolderError, setOpenFolderError] = useState<string>();
 
 	useEffect(() => {
 		void (async () => {
@@ -331,11 +333,18 @@ export default function App({initialPath}: Props) {
 				bytesAfter={progress.bytesAfter}
 				videoWorkers={progress.videoWorkers}
 				resourceAdvice={progress.resourceAdvice}
+				openFolderError={openFolderError}
 				onSkipVideo={path => {
 					skipVideo?.(path);
 				}}
 				onSetVideoWorkers={n => {
 					adjustVideoWorkers?.(n);
+				}}
+				onOpenFolder={filePath => {
+					setOpenFolderError(undefined);
+					void openContainingFolder(filePath).catch(() => {
+						setOpenFolderError(ru.openFolderFailed);
+					});
 				}}
 			/>
 		);

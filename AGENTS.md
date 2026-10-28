@@ -15,6 +15,7 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 - **Interactive skip:** during run, ↑↓ focus an active video, `s` + Enter aborts ffmpeg (`skip_user`); original kept; temps/staging cleaned
 - **Runtime video workers:** `[` / `]` change concurrency mid-run (drain on decrease — no abort); loadavg/RAM advice on screen (manual only, no auto-tune)
 - **ffmpeg missing:** offer confirmed install via brew/apt/dnf/pacman/winget/choco; Esc = photos only
+- **Open folder:** during run, `o` opens the original video’s parent folder; labels show `parent/file`
 - **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` in the target folder (settings header + per-file lines + summary)
 
 ## Stack
@@ -108,7 +109,7 @@ Thresholds / confirm / log dump show only settings for enabled media types.
 - Controls: `onControls({ skipVideo, setVideoWorkers, getVideoWorkers })` — AbortController per video path; runtime concurrency
 - Resource: `resourceAdvice` on progress during video phase (advice only)
 
-UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers).
+UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers / `o` folder; labels `parent/file`).
 
 ## Key domain rules
 
@@ -127,6 +128,7 @@ UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers).
 | Previous logs         | Parse OK/SKIP_LARGER/SKIP_LOW_GAIN/SKIP_USER paths; skip as `skip_previous`           | `fs/previous-logs.ts`, `scan.ts`                               |
 | Interactive skip      | Focus active video → confirm → abort ffmpeg → `skip_user`                             | `compress/run.ts`, `video.ts`, RunningScreen                   |
 | Runtime video workers | `[`/`]` adjust pool; drain on decrease; load/RAM advice (no auto)                     | `compress/concurrency.ts`, `resource-advice.ts`, RunningScreen |
+| Open video folder     | `o` opens original parent dir; job label `parent/basename`                            | `fs/open-path.ts`, `ui/job-label.ts`, RunningScreen            |
 
 ## Conventions for changes
 
