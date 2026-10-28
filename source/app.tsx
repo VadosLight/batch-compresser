@@ -1,6 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text, useApp, useInput} from 'ink';
-import {runCompression, type ActiveJobProgress} from './compress/run.js';
+import {
+	runCompression,
+	type ActiveJobProgress,
+	type ProgressEvent,
+} from './compress/run.js';
 import {createDefaultSettings} from './defaults.js';
 import {checkFfmpeg} from './ffmpeg.js';
 import {loadProcessedPathsFromLogs} from './fs/previous-logs.js';
@@ -36,6 +40,8 @@ type ProgressState = {
 	activeJobs: ActiveJobProgress[];
 	bytesBefore: number;
 	bytesAfter: number;
+	videoWorkers?: number;
+	resourceAdvice?: ProgressEvent['resourceAdvice'];
 };
 
 export default function App({initialPath}: Props) {
@@ -63,6 +69,8 @@ export default function App({initialPath}: Props) {
 	});
 	const [summary, setSummary] = useState<RunSummary>();
 	const [skipVideo, setSkipVideo] = useState<(path: string) => void>();
+	const [adjustVideoWorkers, setAdjustVideoWorkers] =
+		useState<(n: number) => void>();
 
 	useEffect(() => {
 		void (async () => {
@@ -142,6 +150,7 @@ export default function App({initialPath}: Props) {
 	const startRun = async () => {
 		setScreen('running');
 		setSkipVideo(undefined);
+		setAdjustVideoWorkers(undefined);
 		setProgress({
 			done: 0,
 			total: scanCount,
@@ -154,6 +163,7 @@ export default function App({initialPath}: Props) {
 			const result = await runCompression(settings, {
 				onControls(controls) {
 					setSkipVideo(() => controls.skipVideo);
+					setAdjustVideoWorkers(() => controls.setVideoWorkers);
 				},
 				onProgress(event) {
 					setProgress({
@@ -166,14 +176,18 @@ export default function App({initialPath}: Props) {
 						activeJobs: event.activeJobs,
 						bytesBefore: event.bytesBefore,
 						bytesAfter: event.bytesAfter,
+						videoWorkers: event.videoWorkers,
+						resourceAdvice: event.resourceAdvice,
 					});
 				},
 			});
 			setSkipVideo(undefined);
+			setAdjustVideoWorkers(undefined);
 			setSummary(result);
 			setScreen('summary');
 		} catch (error_) {
 			setSkipVideo(undefined);
+			setAdjustVideoWorkers(undefined);
 			setError(error_ instanceof Error ? error_.message : String(error_));
 			setScreen('wizard');
 		}
@@ -239,8 +253,13 @@ export default function App({initialPath}: Props) {
 				activeJobs={progress.activeJobs}
 				bytesBefore={progress.bytesBefore}
 				bytesAfter={progress.bytesAfter}
+				videoWorkers={progress.videoWorkers}
+				resourceAdvice={progress.resourceAdvice}
 				onSkipVideo={path => {
 					skipVideo?.(path);
+				}}
+				onSetVideoWorkers={n => {
+					adjustVideoWorkers?.(n);
 				}}
 			/>
 		);

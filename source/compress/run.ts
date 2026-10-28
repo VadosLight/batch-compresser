@@ -8,6 +8,7 @@ import {
 	stageFile,
 } from '../fs/stage.js';
 import {createLogger, buildSummary} from '../log.js';
+import {maxVideoWorkers} from '../presets.js';
 import {scanDirectory} from '../scan.js';
 import type {
 	CompressSettings,
@@ -17,7 +18,12 @@ import type {
 	ScannedFile,
 } from '../types.js';
 import {isCancelError} from './abort.js';
+import {
+	createConcurrencyLimiter,
+	type ConcurrencyLimiter,
+} from './concurrency.js';
 import {compressPhoto} from './photo.js';
+import {sampleResourceAdvice, type ResourceAdvice} from './resource-advice.js';
 import {compressVideo} from './video.js';
 
 export type ActiveJobProgress = {
@@ -59,10 +65,14 @@ export type ProgressEvent = {
 	/** Cumulative size after finish (original size if skipped/error). */
 	bytesAfter: number;
 	result?: FileResult;
+	videoWorkers: number;
+	resourceAdvice?: ResourceAdvice;
 };
 
 export type RunControls = {
 	skipVideo: (path: string) => void;
+	setVideoWorkers: (n: number) => void;
+	getVideoWorkers: () => number;
 };
 
 export type RunCompressionHandlers = {
@@ -127,12 +137,13 @@ export const runCompression = async (
 	let bytesAfter = 0;
 	const active = new Map<string, ActiveJobProgress>();
 	const videoAbortControllers = new Map<string, AbortController>();
-
-	onControls?.({
-		skipVideo(path: string) {
-			videoAbortControllers.get(path)?.abort();
-		},
-	});
+	const videoMax = maxVideoWorkers();
+	const videoLimit: ConcurrencyLimiter = createConcurrencyLimiter(
+		Math.max(1, settings.videoWorkers),
+		{max: videoMax},
+	);
+	let videoPhase = false;
+	let lastProgressFile: ScannedFile | undefined;
 
 	const sessionDir = settings.stageToFastDisk
 		? await createStageSession(settings.stageDir)
@@ -159,7 +170,20 @@ export const runCompression = async (
 			result.status === 'ok' ? result.bytesAfter : result.bytesBefore;
 	};
 
+	const buildAdvice = (): ResourceAdvice | undefined => {
+		if (!videoPhase) {
+			return undefined;
+		}
+
+		return sampleResourceAdvice({
+			videoWorkers: videoLimit.getConcurrency(),
+			maxWorkers: videoMax,
+			pendingCount: videoLimit.pendingCount,
+		});
+	};
+
 	const emit = (file: ScannedFile, extra?: Partial<ProgressEvent>): void => {
+		lastProgressFile = file;
 		onProgress?.({
 			done,
 			total,
@@ -168,9 +192,35 @@ export const runCompression = async (
 			activeJobs: snapshotActive(),
 			bytesBefore,
 			bytesAfter,
+			videoWorkers: videoLimit.getConcurrency(),
+			resourceAdvice: buildAdvice(),
 			...extra,
 		});
 	};
+
+	const emitWorkersChanged = (): void => {
+		const file = lastProgressFile ?? {
+			path: '',
+			kind: 'video' as const,
+			sizeBytes: 0,
+		};
+		emit(file);
+	};
+
+	onControls?.({
+		skipVideo(path: string) {
+			videoAbortControllers.get(path)?.abort();
+		},
+		setVideoWorkers(n: number) {
+			videoLimit.setConcurrency(n);
+			if (videoPhase) {
+				emitWorkersChanged();
+			}
+		},
+		getVideoWorkers() {
+			return videoLimit.getConcurrency();
+		},
+	});
 
 	const fillBytes = async (
 		file: ScannedFile,
@@ -320,9 +370,9 @@ export const runCompression = async (
 		);
 		results.push(...photoResults);
 
-		const videoLimit = pLimit(Math.max(1, settings.videoWorkers));
+		videoPhase = true;
 		const videoResults = await Promise.all(
-			videos.map(async file => videoLimit(async () => handleOne(file))),
+			videos.map(async file => videoLimit.run(async () => handleOne(file))),
 		);
 		results.push(...videoResults);
 	} finally {

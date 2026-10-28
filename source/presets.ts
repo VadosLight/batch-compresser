@@ -25,6 +25,9 @@ export const defaultVideoWorkers = (): number => {
 	return Math.max(1, Math.min(4, half || 1));
 };
 
+/** Runtime upper bound for video workers (one heavy encode per core). */
+export const maxVideoWorkers = (): number => Math.max(1, cpus().length);
+
 export const megapixelChoices: ReadonlyArray<{
 	value: 0 | 1 | 2 | 4 | 8 | 12;
 	label: string;

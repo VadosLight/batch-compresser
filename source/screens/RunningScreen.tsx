@@ -2,9 +2,11 @@ import path from 'node:path';
 import React, {useEffect, useState} from 'react';
 import {Box, Text, useInput} from 'ink';
 import Spinner from 'ink-spinner';
-import type {ActiveJobProgress} from '../compress/run.js';
+import type {ActiveJobProgress, ProgressEvent} from '../compress/run.js';
 import {ru} from '../i18n/ru.js';
 import type {MediaKind} from '../types.js';
+
+type ResourceAdvice = NonNullable<ProgressEvent['resourceAdvice']>;
 
 type Props = {
 	done: number;
@@ -16,7 +18,10 @@ type Props = {
 	activeJobs?: ActiveJobProgress[];
 	bytesBefore?: number;
 	bytesAfter?: number;
+	videoWorkers?: number;
+	resourceAdvice?: ResourceAdvice;
 	onSkipVideo?: (path: string) => void;
+	onSetVideoWorkers?: (n: number) => void;
 };
 
 const progressBar = (percent: number, width = 16): string => {
@@ -66,6 +71,22 @@ const statusLabel = (
 
 const shortName = (filePath: string): string => path.basename(filePath);
 
+const adviceLabel = (advice: ResourceAdvice['advice']): string => {
+	switch (advice) {
+		case 'increase': {
+			return ru.workerAdviceIncrease;
+		}
+
+		case 'decrease': {
+			return ru.workerAdviceDecrease;
+		}
+
+		default: {
+			return ru.workerAdviceOk;
+		}
+	}
+};
+
 export default function RunningScreen({
 	done,
 	total,
@@ -76,7 +97,10 @@ export default function RunningScreen({
 	activeJobs = [],
 	bytesBefore = 0,
 	bytesAfter = 0,
+	videoWorkers,
+	resourceAdvice,
 	onSkipVideo,
+	onSetVideoWorkers,
 }: Props) {
 	const jobs =
 		activeJobs.length > 0
@@ -125,6 +149,16 @@ export default function RunningScreen({
 			return;
 		}
 
+		if (input === '[' && videoWorkers !== undefined) {
+			onSetVideoWorkers?.(Math.max(1, videoWorkers - 1));
+			return;
+		}
+
+		if (input === ']' && videoWorkers !== undefined) {
+			onSetVideoWorkers?.(videoWorkers + 1);
+			return;
+		}
+
 		if (videoJobs.length === 0) {
 			return;
 		}
@@ -146,6 +180,8 @@ export default function RunningScreen({
 
 	const saved = Math.max(0, bytesBefore - bytesAfter);
 	const savedPct = bytesBefore > 0 ? (saved / bytesBefore) * 100 : 0;
+	const showWorkers =
+		videoWorkers !== undefined && resourceAdvice !== undefined;
 
 	return (
 		<Box flexDirection="column">
@@ -158,7 +194,18 @@ export default function RunningScreen({
 			<Text>
 				{ru.activeJobs}: {jobs.length}
 			</Text>
-			{videoJobs.length > 0 ? <Text dimColor>{ru.skipHint}</Text> : null}
+			{showWorkers ? (
+				<Text>
+					{ru.videoWorkersLive(videoWorkers)}
+					{' · '}
+					{ru.resourceLoad(resourceAdvice.load1, resourceAdvice.cpuCount)}
+					{' · '}
+					{adviceLabel(resourceAdvice.advice)}
+				</Text>
+			) : null}
+			{videoJobs.length > 0 || showWorkers ? (
+				<Text dimColor>{ru.skipHint}</Text>
+			) : null}
 			{confirmSkip && focusedPath ? (
 				<Text color="yellow">{ru.skipConfirm(shortName(focusedPath))}</Text>
 			) : null}
