@@ -14,6 +14,7 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 - **Resume:** optional `previousLogsPath` (log file or folder) skips paths already logged as `OK` / `SKIP_LARGER` / `SKIP_LOW_GAIN` / `SKIP_USER`
 - **Interactive skip:** during run, ↑↓ focus an active video, `s` + Enter aborts ffmpeg (`skip_user`); original kept; temps/staging cleaned
 - **Runtime video workers:** `[` / `]` change concurrency mid-run (drain on decrease — no abort); loadavg/RAM advice on screen (manual only, no auto-tune)
+- **ffmpeg missing:** offer confirmed install via brew/apt/dnf/pacman/winget/choco; Esc = photos only
 - **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` in the target folder (settings header + per-file lines + summary)
 
 ## Stack
@@ -49,7 +50,7 @@ Entry: `source/cli.tsx` → `dist/cli.js` (bin).
 ```
 cli.tsx
   └─ app.tsx                 # Screen FSM + settings state + orchestration
-       ├─ screens/*          # boot / ffmpeg warn / scan / confirm / run / summary
+       ├─ screens/*          # boot / ffmpeg warn|install / scan / confirm / run / summary
        ├─ wizard/*           # multi-step settings wizard
        ├─ compress/run.ts    # scan → process → log → summary
        │    ├─ photo.ts      # sharp pipeline
@@ -61,6 +62,7 @@ cli.tsx
        ├─ scan.ts            # recursive walk + filters (+ previous-log skip)
        ├─ log.ts             # settings header, file lines, summary
        ├─ ffmpeg.ts          # availability + ffprobe
+       ├─ ffmpeg-install.ts  # detect package manager + install ffmpeg
        ├─ fs/*               # validate dir, folder picker, previous-logs parse
        ├─ presets.ts         # quality/CRF presets, MP math, naming
        ├─ defaults.ts        # default CompressSettings
@@ -71,7 +73,7 @@ cli.tsx
 ### Screen flow
 
 ```
-boot → (ffmpegWarn?) → wizard(steps 1–7) → scanning → confirm → running → summary
+boot → (ffmpegWarn? → optional install) → wizard(steps 1–7) → scanning → confirm → running → summary
 ```
 
 Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
@@ -119,7 +121,7 @@ UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers).
 | Replace video         | May change extension; unlink old after successful write                               | `compress/write.ts`                                            |
 | Alongside name        | `name_compressed.ext`                                                                 | `presets.compressedSiblingPath`                                |
 | Min size `0`          | Filter off                                                                            | `presets.isBelowMinSize`                                       |
-| ffmpeg missing        | Warn at start; force videos off; photos still work                                    | `app.tsx`, `ffmpeg.ts`                                         |
+| ffmpeg missing        | Warn; optional confirmed install via package manager; Esc = photos only               | `app.tsx`, `ffmpeg.ts`, `ffmpeg-install.ts`                    |
 | Folder/file picker    | macOS osascript / Windows WinForms / Linux zenity\|kdialog; `pickFolder` + `pickFile` | `fs/pick-folder.ts`                                            |
 | Staging               | Copy to `stageDir` (default OS tmp), encode there, commit to original                 | `fs/stage.ts`, `compress/run.ts`                               |
 | Previous logs         | Parse OK/SKIP_LARGER/SKIP_LOW_GAIN/SKIP_USER paths; skip as `skip_previous`           | `fs/previous-logs.ts`, `scan.ts`                               |

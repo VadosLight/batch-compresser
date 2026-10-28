@@ -5,7 +5,7 @@
 ## Требования
 
 - Node.js ≥ 16
-- [ffmpeg](https://ffmpeg.org/) в `PATH` (для видео). Без ffmpeg приложение работает только с фото.
+- [ffmpeg](https://ffmpeg.org/) в `PATH` (для видео). Без ffmpeg при старте можно подтвердить установку через brew/apt/dnf/pacman/winget/choco, либо продолжить только с фото.
 
 ```bash
 # macOS
@@ -14,7 +14,8 @@ brew install ffmpeg
 # Debian/Ubuntu
 sudo apt install ffmpeg
 
-# Windows (Chocolatey)
+# Windows (winget / Chocolatey)
+winget install --id Gyan.FFmpeg -e
 choco install ffmpeg
 ```
 

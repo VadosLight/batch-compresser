@@ -1,9 +1,17 @@
 export const ru = {
 	appTitle: 'Batch Compresser — массовое сжатие фото и видео',
 	ffmpegOk: 'ffmpeg найден',
-	ffmpegMissing:
-		'ffmpeg не найден в PATH. Видео будет недоступно. Установите ffmpeg (brew/apt/choco) и перезапустите.',
+	ffmpegMissing: 'ffmpeg не найден в PATH.',
 	ffmpegOnlyPhotos: 'Продолжить только с фото',
+	ffmpegInstallPrompt: (manager: string) => `Установить через ${manager}?`,
+	ffmpegInstallEnter: 'Enter — установить',
+	ffmpegInstallEsc: 'Esc — только фото',
+	ffmpegInstallManual:
+		'Установите вручную: brew / apt / winget / choco install ffmpeg',
+	ffmpegInstalling: 'Установка ffmpeg…',
+	ffmpegInstallFailed: 'Не удалось установить ffmpeg.',
+	ffmpegInstallRetry: 'Enter — повторить · Esc — только фото',
+	ffmpegInstallOk: 'ffmpeg установлен',
 	pathPrompt: 'Путь к папке',
 	pathNotSet: '(не выбран)',
 	pathTypeManually: 'Ввести путь вручную',

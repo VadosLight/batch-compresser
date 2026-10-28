@@ -3,6 +3,8 @@ import type {CompressSettings} from '../types.js';
 export type Screen =
 	| 'boot'
 	| 'ffmpegWarn'
+	| 'ffmpegInstalling'
+	| 'ffmpegInstallFail'
 	| 'wizard'
 	| 'scanning'
 	| 'confirm'

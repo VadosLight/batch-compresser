@@ -7,11 +7,17 @@ import {
 } from './compress/run.js';
 import {createDefaultSettings} from './defaults.js';
 import {checkFfmpeg} from './ffmpeg.js';
+import {
+	detectInstallPlan,
+	installFfmpeg,
+	type FfmpegInstallPlan,
+} from './ffmpeg-install.js';
 import {loadProcessedPathsFromLogs} from './fs/previous-logs.js';
 import {ru} from './i18n/ru.js';
 import {scanDirectory} from './scan.js';
 import BootScreen from './screens/BootScreen.js';
 import ConfirmScreen from './screens/ConfirmScreen.js';
+import FfmpegInstallingScreen from './screens/FfmpegInstallingScreen.js';
 import FfmpegWarnScreen from './screens/FfmpegWarnScreen.js';
 import RunningScreen from './screens/RunningScreen.js';
 import ScanningScreen from './screens/ScanningScreen.js';
@@ -49,6 +55,10 @@ export default function App({initialPath}: Props) {
 	const [screen, setScreen] = useState<Screen>('boot');
 	const [ffmpegAvailable, setFfmpegAvailable] = useState(true);
 	const [ffmpegLine, setFfmpegLine] = useState<string>();
+	const [ffmpegInstallPlan, setFfmpegInstallPlan] = useState<
+		FfmpegInstallPlan | undefined
+	>();
+	const [ffmpegInstallError, setFfmpegInstallError] = useState<string>();
 	const [step, setStep] = useState(1);
 	const [settings, setSettings] = useState<CompressSettings>(() =>
 		createDefaultSettings(initialPath ?? ''),
@@ -79,12 +89,50 @@ export default function App({initialPath}: Props) {
 			setFfmpegLine(status.versionLine);
 			if (!status.available) {
 				setSettings(s => ({...s, processVideos: false}));
+				const plan = await detectInstallPlan();
+				setFfmpegInstallPlan(plan);
 				setScreen('ffmpegWarn');
 			} else {
 				setScreen('wizard');
 			}
 		})();
 	}, []);
+
+	const continuePhotosOnly = () => {
+		setSettings(s => ({...s, processVideos: false}));
+		setFfmpegAvailable(false);
+		setFfmpegInstallError(undefined);
+		setScreen('wizard');
+	};
+
+	const runFfmpegInstall = async () => {
+		if (!ffmpegInstallPlan) {
+			continuePhotosOnly();
+			return;
+		}
+
+		setFfmpegInstallError(undefined);
+		setScreen('ffmpegInstalling');
+		const result = await installFfmpeg(ffmpegInstallPlan);
+		if (!result.ok) {
+			setFfmpegInstallError(result.errorMessage);
+			setScreen('ffmpegInstallFail');
+			return;
+		}
+
+		const status = await checkFfmpeg();
+		if (!status.available) {
+			setFfmpegInstallError(ru.ffmpegMissing);
+			setScreen('ffmpegInstallFail');
+			return;
+		}
+
+		setFfmpegAvailable(true);
+		setFfmpegLine(status.versionLine);
+		setSettings(s => ({...s, processVideos: true}));
+		setFfmpegInstallError(undefined);
+		setScreen('wizard');
+	};
 
 	const patch = (partial: Partial<CompressSettings>) => {
 		setSettings(s => ({...s, ...partial}));
@@ -194,8 +242,28 @@ export default function App({initialPath}: Props) {
 	};
 
 	useInput((_input, key) => {
-		if (screen === 'ffmpegWarn' && key.return) {
-			setScreen('wizard');
+		if (screen === 'ffmpegWarn') {
+			if (key.return) {
+				if (ffmpegInstallPlan) {
+					void runFfmpegInstall();
+				} else {
+					continuePhotosOnly();
+				}
+			}
+
+			if (key.escape) {
+				continuePhotosOnly();
+			}
+		}
+
+		if (screen === 'ffmpegInstallFail') {
+			if (key.return) {
+				void runFfmpegInstall();
+			}
+
+			if (key.escape) {
+				continuePhotosOnly();
+			}
 		}
 
 		if (screen === 'confirm') {
@@ -222,7 +290,15 @@ export default function App({initialPath}: Props) {
 	}
 
 	if (screen === 'ffmpegWarn') {
-		return <FfmpegWarnScreen />;
+		return <FfmpegWarnScreen plan={ffmpegInstallPlan} />;
+	}
+
+	if (screen === 'ffmpegInstalling') {
+		return <FfmpegInstallingScreen />;
+	}
+
+	if (screen === 'ffmpegInstallFail') {
+		return <FfmpegInstallingScreen failed errorMessage={ffmpegInstallError} />;
 	}
 
 	if (screen === 'scanning') {
