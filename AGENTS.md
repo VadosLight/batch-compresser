@@ -93,7 +93,7 @@ Thresholds / confirm / log dump show only settings for enabled media types.
 ### Compression pipeline
 
 1. `createLogger(rootDir, settings)` — writes `=== ПАРАМЕТРЫ ===` first
-2. `scanDirectory` — recursive; classifies by extension; applies min-size, `*_compressed`, and optional previous-log skips (`fs/previous-logs.ts`)
+2. `scanDirectory` — recursive; classifies by extension (`videoScanAllFormats` → broad ffmpeg demuxer set, else core mp4/mov/mkv/…); applies min-size, `*_compressed`, and optional previous-log skips (`fs/previous-logs.ts`)
 3. Photos: parallel (`photoWorkers`, default `cpus()-1`)
 4. Videos: optional size-ascending queue (`videosSmallFirst`); parallel adjustable pool (`videoWorkers`, default `min(4, floor(cpus/2))`, max `cpus()`); per-file progress via `ffmpeg -progress pipe:1`
 5. Optional **staging** (`stageToFastDisk`): copy HDD → SSD tmp → encode → **delete staged input immediately** → write result back (EXDEV-safe `moveFile`); session dir cleaned in `finally`
@@ -145,17 +145,17 @@ UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers / `o` folde
 
 ## Where to change what
 
-| Goal                          | Touch                                               |
-| ----------------------------- | --------------------------------------------------- |
-| New CLI flag                  | `cli.tsx` + pass into `App`                         |
-| Default settings              | `defaults.ts`, `presets.ts`                         |
-| Log format / settings dump    | `log.ts` (`formatSettingsBlock`)                    |
-| Photo codecs / resize         | `compress/photo.ts`                                 |
-| Video encode flags / progress | `compress/video.ts`, `ffmpeg-progress.ts`           |
-| Extensions scanned            | `scan.ts`                                           |
-| Worker / queue / staging      | `compress/run.ts`, `fs/stage.ts`                    |
-| Resume from previous logs     | `fs/previous-logs.ts`, `scan.ts`, wizard OutputStep |
-| Select keyboard UX            | `components/Select.tsx`                             |
+| Goal                          | Touch                                                    |
+| ----------------------------- | -------------------------------------------------------- |
+| New CLI flag                  | `cli.tsx` + pass into `App`                              |
+| Default settings              | `defaults.ts`, `presets.ts`                              |
+| Log format / settings dump    | `log.ts` (`formatSettingsBlock`)                         |
+| Photo codecs / resize         | `compress/photo.ts`                                      |
+| Video encode flags / progress | `compress/video.ts`, `ffmpeg-progress.ts`                |
+| Extensions scanned            | `scan.ts`, `video-extensions.ts` (`videoScanAllFormats`) |
+| Worker / queue / staging      | `compress/run.ts`, `fs/stage.ts`                         |
+| Resume from previous logs     | `fs/previous-logs.ts`, `scan.ts`, wizard OutputStep      |
+| Select keyboard UX            | `components/Select.tsx`                                  |
 
 ## Out of scope (v1 — do not add unless requested)
 

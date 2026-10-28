@@ -53,6 +53,10 @@ export default function ConfirmScreen({
 					{settings.videosSmallFirst
 						? `, ${ru.videosSmallFirst.toLowerCase()}`
 						: ''}
+					,{' '}
+					{settings.videoScanAllFormats
+						? ru.videoScanAllFormatsOn
+						: ru.videoScanAllFormatsOff}
 				</Text>
 			) : null}
 			{workerParts.length > 0 ? (

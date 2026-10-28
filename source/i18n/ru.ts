@@ -40,6 +40,11 @@ export const ru = {
 	videosSmallFirst: 'Сначала маленькие видео',
 	videosSmallFirstHint:
 		'Очередь по возрастанию размера — быстрее виден прогресс',
+	videoScanAllFormats: 'Сканировать все форматы ffmpeg',
+	videoScanAllFormatsHint:
+		'Расширения из demuxers ffmpeg + полный список контейнеров; иначе только распространённые',
+	videoScanAllFormatsOn: 'Все форматы ffmpeg',
+	videoScanAllFormatsOff: 'Только основные (mp4/mov/mkv/…)',
 	replaceFiles: 'Полная замена файлов (иначе рядом *_compressed)',
 	photoWorkers: 'Параллельных воркеров для фото',
 	videoWorkers: 'Параллельных воркеров для видео',

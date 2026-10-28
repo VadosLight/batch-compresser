@@ -2,6 +2,10 @@ import {readdir, stat} from 'node:fs/promises';
 import path from 'node:path';
 import {isBelowMinSize, isCompressedName} from './presets.js';
 import type {CompressSettings, MediaKind, ScannedFile} from './types.js';
+import {
+	CORE_VIDEO_EXTENSIONS,
+	resolveVideoExtensions,
+} from './video-extensions.js';
 
 const PHOTO_EXT = new Set([
 	'.jpg',
@@ -15,26 +19,16 @@ const PHOTO_EXT = new Set([
 	'.gif',
 ]);
 
-const VIDEO_EXT = new Set([
-	'.mp4',
-	'.mov',
-	'.mkv',
-	'.avi',
-	'.webm',
-	'.m4v',
-	'.wmv',
-	'.flv',
-	'.mts',
-	'.m2ts',
-]);
-
-export const detectKind = (filePath: string): MediaKind | undefined => {
+export const detectKind = (
+	filePath: string,
+	videoExtensions: ReadonlySet<string> = CORE_VIDEO_EXTENSIONS,
+): MediaKind | undefined => {
 	const ext = path.extname(filePath).toLowerCase();
 	if (PHOTO_EXT.has(ext)) {
 		return 'photo';
 	}
 
-	if (VIDEO_EXT.has(ext)) {
+	if (videoExtensions.has(ext)) {
 		return 'video';
 	}
 
@@ -67,10 +61,18 @@ const walk = async (dir: string): Promise<string[]> => {
 export const scanDirectory = async (
 	settings: Pick<
 		CompressSettings,
-		'rootDir' | 'processPhotos' | 'processVideos' | 'minPhotoMb' | 'minVideoMb'
+		| 'rootDir'
+		| 'processPhotos'
+		| 'processVideos'
+		| 'minPhotoMb'
+		| 'minVideoMb'
+		| 'videoScanAllFormats'
 	>,
 	processedPaths: ReadonlySet<string> = new Set(),
 ): Promise<ScanOutcome> => {
+	const videoExtensions = settings.processVideos
+		? await resolveVideoExtensions(settings.videoScanAllFormats)
+		: CORE_VIDEO_EXTENSIONS;
 	const allPaths = await walk(settings.rootDir);
 	const toProcess: ScannedFile[] = [];
 	const skippedSmall: ScannedFile[] = [];
@@ -78,7 +80,7 @@ export const scanDirectory = async (
 	const skippedPrevious: ScannedFile[] = [];
 
 	for (const filePath of allPaths) {
-		const kind = detectKind(filePath);
+		const kind = detectKind(filePath, videoExtensions);
 		if (!kind) {
 			continue;
 		}

@@ -33,6 +33,11 @@ export type CompressSettings = {
 	videoMaxHeight: VideoMaxHeight;
 	/** Queue videos by ascending size so short/small files finish first. */
 	videosSmallFirst: boolean;
+	/**
+	 * When true, scan uses a broad ffmpeg demuxer extension set
+	 * (static all-formats list + live `ffmpeg -formats`).
+	 */
+	videoScanAllFormats: boolean;
 	replaceFiles: boolean;
 	photoWorkers: number;
 	videoWorkers: number;

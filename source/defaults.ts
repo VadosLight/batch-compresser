@@ -16,6 +16,7 @@ export const createDefaultSettings = (rootDir = ''): CompressSettings => ({
 	videoPreset: 'medium',
 	videoMaxHeight: 0,
 	videosSmallFirst: true,
+	videoScanAllFormats: true,
 	replaceFiles: false,
 	photoWorkers: defaultPhotoWorkers(),
 	videoWorkers: defaultVideoWorkers(),

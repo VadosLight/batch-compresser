@@ -90,6 +90,11 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 				{ru.videosSmallFirst}: {settings.videosSmallFirst ? ru.yes : ru.no}
 			</Text>
 			<Text dimColor>{ru.videosSmallFirstHint}</Text>
+			<Text>
+				{ru.videoScanAllFormats}:{' '}
+				{settings.videoScanAllFormats ? ru.on : ru.off}
+			</Text>
+			<Text dimColor>{ru.videoScanAllFormatsHint}</Text>
 			<Select
 				items={[
 					{label: 'Пресет', value: 'preset'},
@@ -100,6 +105,12 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 							? 'Выключить «сначала маленькие»'
 							: 'Включить «сначала маленькие»',
 						value: 'toggle-small-first',
+					},
+					{
+						label: settings.videoScanAllFormats
+							? `Выключить «${ru.videoScanAllFormats}»`
+							: `Включить «${ru.videoScanAllFormats}»`,
+						value: 'toggle-scan-formats',
 					},
 					{label: '→ Далее', value: 'next'},
 				]}
@@ -112,6 +123,11 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 
 					if (v === 'toggle-small-first') {
 						patch({videosSmallFirst: !settings.videosSmallFirst});
+						return;
+					}
+
+					if (v === 'toggle-scan-formats') {
+						patch({videoScanAllFormats: !settings.videoScanAllFormats});
 						return;
 					}
 
