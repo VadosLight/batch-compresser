@@ -1,4 +1,16 @@
-export const ru = {
+import {formatBytesWith} from './format-bytes.js';
+import type {Messages} from './types.js';
+
+const byteUnits = {
+	b: 'Б',
+	kb: 'КБ',
+	mb: 'МБ',
+	gb: 'ГБ',
+} as const;
+
+const fb = (n: number): string => formatBytesWith(n, byteUnits);
+
+export const ru: Messages = {
 	appTitle: 'Batch Compresser — массовое сжатие фото и видео',
 	ffmpegOk: 'ffmpeg найден',
 	ffmpegMissing: 'ffmpeg не найден в PATH.',
@@ -12,6 +24,7 @@ export const ru = {
 	ffmpegInstallFailed: 'Не удалось установить ffmpeg.',
 	ffmpegInstallRetry: 'Enter — повторить · Esc — только фото',
 	ffmpegInstallOk: 'ffmpeg установлен',
+	checkingFfmpeg: 'Проверка ffmpeg…',
 	pathPrompt: 'Путь к папке',
 	pathNotSet: '(не выбран)',
 	pathTypeManually: 'Ввести путь вручную',
@@ -71,9 +84,27 @@ export const ru = {
 	videoStatusStage: 'Копирование на быстрый диск',
 	next: 'Далее',
 	back: 'Назад (Esc)',
+	nextArrow: '→ Далее',
+	backArrow: '← Назад',
 	confirmTitle: 'Подтверждение запуска',
 	confirmStart: 'Enter — начать',
 	confirmCancel: 'Esc — назад к настройкам',
+	confirmFolder: (path: string) => `Папка: ${path}`,
+	confirmMode: (replace: boolean) =>
+		`Режим: ${replace ? 'замена файлов' : 'рядом *_compressed'}`,
+	confirmPhoto: ({minMb, mpLabel, quality}) =>
+		`Фото: мин ${minMb} МБ, ${mpLabel} Мп, q=${quality}`,
+	confirmVideo: ({minMb, crf, heightLabel, smallFirstSuffix, scanFormats}) =>
+		`Видео: мин ${minMb} МБ, CRF=${crf}, высота=${heightLabel}${smallFirstSuffix}, ${scanFormats}`,
+	confirmWorkers: (parts: string) => `Воркеры: ${parts}`,
+	confirmStaging: (enabled: boolean, dir: string) =>
+		`Staging: ${enabled ? 'Да' : 'Нет'}${enabled ? ` → ${dir}` : ''}`,
+	workerPhoto: (n: number) => `фото ${n}`,
+	workerVideo: (n: number) => `видео ${n}`,
+	mpUnlimited: '∞',
+	mpUnchanged: 'без изм.',
+	heightSource: 'исходное',
+	heightSourceShort: 'исх.',
 	scanning: 'Сканирование…',
 	foundFiles: (n: number) => `Найдено файлов к обработке: ${n}`,
 	noFiles: 'Нет файлов по заданным фильтрам.',
@@ -81,15 +112,12 @@ export const ru = {
 		`Обработано ${done}/${total}: ${current}`,
 	batchProgress: (done: number, total: number) => `Готово ${done}/${total}`,
 	batchSaved: (before: number, after: number, saved: number, pct: number) =>
-		`экономия ${formatBytes(saved)} (${formatBytes(before)} → ${formatBytes(
-			after,
-		)}, −${pct.toFixed(1)}%)`,
+		`экономия ${fb(saved)} (${fb(before)} → ${fb(after)}, −${pct.toFixed(1)}%)`,
 	activeJobs: 'Активных задач',
 	skipHint: '↑↓ выбор · s пропуск · [ ] воркеры · o папка',
 	openFolderFailed: 'Не удалось открыть папку',
 	skipConfirm: (name: string) => `Пропустить ${name}? Enter — да · Esc — нет`,
 	videoWorkersLive: (n: number) => `Воркеры видео: ${n}`,
-	/** `loadPerCore` = loadavg / cores; 1.00× ≈ все ядра заняты (macOS/Linux). */
 	resourceLoad: (loadPerCore: number, cpuCount: number) =>
 		`нагрузка ${loadPerCore.toFixed(2)}× (${cpuCount})`,
 	workerAdviceIncrease: 'совет: увеличить',
@@ -138,9 +166,7 @@ export const ru = {
 	skipLowGain: (n: number) => `Пропущено (экономия < 3%): ${n}`,
 	errors: (n: number) => `Ошибки: ${n}`,
 	bytes: (before: number, after: number, pct: number) =>
-		`Размер: ${formatBytes(before)} → ${formatBytes(
-			after,
-		)} (экономия ${pct.toFixed(1)}%)`,
+		`Размер: ${fb(before)} → ${fb(after)} (экономия ${pct.toFixed(1)}%)`,
 	done: 'Готово. Нажмите Ctrl+C для выхода.',
 	yes: 'Да',
 	no: 'Нет',
@@ -149,22 +175,82 @@ export const ru = {
 	step: (n: number, total: number, title: string) =>
 		`Шаг ${n}/${total}: ${title}`,
 	needMediaType: 'Включите хотя бы фото или видео',
-} as const;
+	wizardStepTitle: {
+		1: 'Папка',
+		2: 'Типы файлов',
+		3: 'Пороги размера',
+		4: 'Настройки фото',
+		5: 'Настройки видео',
+		6: 'Вывод, воркеры и логи',
+		7: 'Готово к сканированию',
+	},
+	mediaSummary: (photo: string, video: string) =>
+		`Фото: ${photo} · Видео: ${video}`,
+	togglePhotoOn: 'Включить фото',
+	togglePhotoOff: 'Выключить фото',
+	toggleVideoOn: 'Включить видео',
+	toggleVideoOff: 'Выключить видео',
+	toggleVideoNoFfmpeg: 'Включить видео (нет ffmpeg)',
+	thresholdPhoto: (mb: number) => `Фото ≥ ${mb} МБ`,
+	thresholdVideo: (mb: number) => `Видео ≥ ${mb} МБ`,
+	changeMinPhoto: 'Изменить мин. фото',
+	changeMinVideo: 'Изменить мин. видео',
+	photoSummary: (format: string, mpLabel: string, quality: number) =>
+		`Формат: ${format}, Мп: ${mpLabel}, качество: ${quality}`,
+	menuFormat: 'Формат',
+	menuMp: 'Мегапиксели',
+	menuQualityPreset: 'Пресет качества',
+	menuQualityNumber: 'Число качества',
+	customPreset: 'Свой',
+	qualityHigh: 'Высокое',
+	qualityMedium: 'Среднее',
+	qualityLow: 'Низкое',
+	megapixelsUnchanged: 'Без изменения',
+	megapixelsN: (n: number) => `${n} Мп`,
+	heightNp: (n: number) => `${n}p`,
+	videoSummary: (crf: number, heightLabel: string) =>
+		`CRF: ${crf}, высота: ${heightLabel}`,
+	menuPreset: 'Пресет',
+	menuCrf: 'CRF числом',
+	menuHeight: 'Макс. высота',
+	toggleSmallFirstOn: 'Включить «сначала маленькие»',
+	toggleSmallFirstOff: 'Выключить «сначала маленькие»',
+	toggleScanAllOn: (label: string) => `Включить «${label}»`,
+	toggleScanAllOff: (label: string) => `Выключить «${label}»`,
+	readyHint: 'Проверьте настройки и запустите сканирование.',
+	goScan: 'Сканировать и подтвердить',
+	enterValidateNext: 'Enter — проверить и далее · Esc — меню',
+	enterSaveBack: 'Enter — сохранить · Esc — назад',
+	outputToggleToSibling: 'Переключить на «рядом *_compressed»',
+	outputToggleToReplace: 'Переключить на полную замену',
+	outputPhotoWorkers: 'Воркеры фото',
+	outputVideoWorkers: 'Воркеры видео',
+	outputStagingOff: 'Выключить staging на быстрый диск',
+	outputStagingOn: 'Включить staging (HDD→SSD tmp)',
+	outputStageDir: 'Путь staging-папки',
+	outputPreviousLogs: 'Путь к предыдущим логам',
+	pickFolderDefault: 'Выберите папку для сжатия',
+	pickFileDefault: 'Выберите файл лога',
+	needZenityFolder: 'Установите zenity или kdialog для выбора папки',
+	needZenityFile: 'Установите zenity или kdialog для выбора файла',
+	zenityLogFilter: 'Логи (*.log) | *.log',
+	zenityAllFilter: 'Все файлы | *',
+	cliHelp: `
+	Использование
+	  $ batch-compresser
 
-export const formatBytes = (bytes: number): string => {
-	if (bytes < 1024) {
-		return `${bytes} Б`;
-	}
+	Опции
+	  --path, -p  Начальный путь к папке
 
-	const kb = bytes / 1024;
-	if (kb < 1024) {
-		return `${kb.toFixed(1)} КБ`;
-	}
-
-	const mb = kb / 1024;
-	if (mb < 1024) {
-		return `${mb.toFixed(2)} МБ`;
-	}
-
-	return `${(mb / 1024).toFixed(2)} ГБ`;
+	Примеры
+	  $ batch-compresser
+	  $ batch-compresser --path ~/Pictures
+`,
+	byteUnits,
+	durationUnits: {
+		d: 'д',
+		h: 'ч',
+		min: 'мин',
+		s: 'с',
+	},
 };

@@ -91,16 +91,7 @@ export const loadProcessedPathsFromLogs = async (
 
 	const validation = await validateLogsPath(trimmed);
 	if (!validation.ok) {
-		const messages: Record<
-			Exclude<LogsPathValidation, {ok: true}>['reason'],
-			string
-		> = {
-			empty: 'Укажите путь к логам',
-			missing: 'Путь к предыдущим логам не существует',
-			unreadable: 'Нет доступа к предыдущим логам',
-			notLogsPath: 'Путь к логам должен быть файлом или папкой',
-		};
-		throw new Error(messages[validation.reason]);
+		throw new Error(`previous_logs_${validation.reason}`);
 	}
 
 	const logFiles = await listLogFiles(validation.resolved);

@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
 import Select from '../components/Select.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 export default function ThresholdStep({
@@ -18,7 +18,7 @@ export default function ThresholdStep({
 	if (mode === 'photo' || mode === 'video') {
 		return (
 			<Box flexDirection="column">
-				<Text>{mode === 'photo' ? ru.minPhotoMb : ru.minVideoMb}:</Text>
+				<Text>{mode === 'photo' ? t.minPhotoMb : t.minVideoMb}:</Text>
 				<TextInput
 					value={draft}
 					onChange={setDraft}
@@ -43,11 +43,11 @@ export default function ThresholdStep({
 
 	const summaryParts: string[] = [];
 	if (showPhoto) {
-		summaryParts.push(`Фото ≥ ${settings.minPhotoMb} МБ`);
+		summaryParts.push(t.thresholdPhoto(settings.minPhotoMb));
 	}
 
 	if (showVideo) {
-		summaryParts.push(`Видео ≥ ${settings.minVideoMb} МБ`);
+		summaryParts.push(t.thresholdVideo(settings.minVideoMb));
 	}
 
 	return (
@@ -56,12 +56,12 @@ export default function ThresholdStep({
 			<Select
 				items={[
 					...(showPhoto
-						? [{label: 'Изменить мин. фото', value: 'photo' as const}]
+						? [{label: t.changeMinPhoto, value: 'photo' as const}]
 						: []),
 					...(showVideo
-						? [{label: 'Изменить мин. видео', value: 'video' as const}]
+						? [{label: t.changeMinVideo, value: 'video' as const}]
 						: []),
-					{label: '→ Далее', value: 'next'},
+					{label: t.nextArrow, value: 'next'},
 				]}
 				initialValue="next"
 				onSelect={v => {

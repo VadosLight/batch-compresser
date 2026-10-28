@@ -3,7 +3,7 @@ import {Box, Text, useApp, useInput} from 'ink';
 import type {SessionPresenter} from '../core/app/SessionPresenter.js';
 import type {AppViewModel} from '../core/app/view-model.js';
 import {wizardStepOrdinal} from '../core/wizard-nav.js';
-import {ru} from './i18n/ru.js';
+import {t} from './i18n/index.js';
 import BootScreen from './screens/BootScreen.js';
 import ConfirmScreen from './screens/ConfirmScreen.js';
 import FfmpegInstallingScreen from './screens/FfmpegInstallingScreen.js';
@@ -104,7 +104,7 @@ export default function App({presenter}: Props) {
 				failed
 				errorMessage={
 					vm.ffmpeg.installError === 'ffmpeg_still_missing'
-						? ru.ffmpegMissing
+						? t.ffmpegMissing
 						: vm.ffmpeg.installError
 				}
 			/>
@@ -142,7 +142,7 @@ export default function App({presenter}: Props) {
 				bytesAfter={progress.bytesAfter}
 				videoWorkers={progress.videoWorkers}
 				resourceAdvice={progress.resourceAdvice}
-				openFolderError={vm.openFolderError ? ru.openFolderFailed : undefined}
+				openFolderError={vm.openFolderError ? t.openFolderFailed : undefined}
 				onSkipVideo={path => {
 					presenter.skipVideo(path);
 				}}
@@ -166,29 +166,41 @@ export default function App({presenter}: Props) {
 		}
 
 		if (vm.error === 'path_empty') {
-			return ru.pathError.empty;
+			return t.pathError.empty;
 		}
 
 		if (vm.error === 'need_media_type') {
-			return ru.needMediaType;
+			return t.needMediaType;
 		}
 
 		if (vm.error.startsWith('path_')) {
 			const reason = vm.error.slice('path_'.length);
 			if (reason === 'empty') {
-				return ru.pathError.empty;
+				return t.pathError.empty;
 			}
 
 			if (reason === 'missing') {
-				return ru.pathError.missing;
+				return t.pathError.missing;
 			}
 
 			if (reason === 'notDirectory') {
-				return ru.pathError.notDirectory;
+				return t.pathError.notDirectory;
 			}
 
 			if (reason === 'unreadable') {
-				return ru.pathError.unreadable;
+				return t.pathError.unreadable;
+			}
+		}
+
+		if (vm.error.startsWith('previous_logs_')) {
+			const reason = vm.error.slice('previous_logs_'.length);
+			if (
+				reason === 'empty' ||
+				reason === 'missing' ||
+				reason === 'unreadable' ||
+				reason === 'notLogsPath'
+			) {
+				return t.previousLogsError[reason];
 			}
 		}
 
@@ -197,16 +209,16 @@ export default function App({presenter}: Props) {
 
 	return (
 		<Box flexDirection="column">
-			<Text bold>{ru.appTitle}</Text>
+			<Text bold>{t.appTitle}</Text>
 			{vm.ffmpeg.available && vm.ffmpeg.versionLine ? (
 				<Text dimColor>
-					{ru.ffmpegOk}: {vm.ffmpeg.versionLine}
+					{t.ffmpegOk}: {vm.ffmpeg.versionLine}
 				</Text>
 			) : null}
 			{errorText ? <Text color="red">{errorText}</Text> : null}
 			<Box marginY={1}>
 				<Text color="cyan">
-					{ru.step(
+					{t.step(
 						stepMeta.index,
 						stepMeta.total,
 						wizardStepTitle(vm.wizardStep),

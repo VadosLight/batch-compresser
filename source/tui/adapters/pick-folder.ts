@@ -1,5 +1,8 @@
 import {platform} from 'node:os';
 import {execa} from 'execa';
+import {getMessages, resolveUiLocale} from '../i18n/index.js';
+
+const t = (): ReturnType<typeof getMessages> => getMessages(resolveUiLocale());
 
 export type PickPathResult =
 	| {ok: true; path: string}
@@ -18,9 +21,6 @@ const exitCode = (error: unknown): number | undefined =>
 type PickOptions = {
 	prompt?: string;
 };
-
-const defaultFolderPrompt = 'Выберите папку для сжатия';
-const defaultFilePrompt = 'Выберите файл лога';
 
 const pickMacFolder = async (prompt: string): Promise<PickPathResult> => {
 	try {
@@ -133,7 +133,7 @@ const pickLinuxFolder = async (prompt: string): Promise<PickPathResult> => {
 	return {
 		ok: false,
 		cancelled: false,
-		message: 'Установите zenity или kdialog для выбора папки',
+		message: t().needZenityFolder,
 	};
 };
 
@@ -143,8 +143,8 @@ const pickLinuxFile = async (prompt: string): Promise<PickPathResult> => {
 			const {stdout} = await execa('zenity', [
 				'--file-selection',
 				`--title=${prompt}`,
-				'--file-filter=Логи (*.log) | *.log',
-				'--file-filter=Все файлы | *',
+				`--file-filter=${t().zenityLogFilter}`,
+				`--file-filter=${t().zenityAllFilter}`,
 			]);
 			const chosen = trimPath(stdout);
 			return chosen ? {ok: true, path: chosen} : {ok: false, cancelled: true};
@@ -190,7 +190,7 @@ const pickLinuxFile = async (prompt: string): Promise<PickPathResult> => {
 	return {
 		ok: false,
 		cancelled: false,
-		message: 'Установите zenity или kdialog для выбора файла',
+		message: t().needZenityFile,
 	};
 };
 
@@ -259,7 +259,7 @@ const pickWindowsFile = async (prompt: string): Promise<PickPathResult> => {
 export const pickFolder = async (
 	options: PickOptions = {},
 ): Promise<PickPathResult> => {
-	const prompt = options.prompt ?? defaultFolderPrompt;
+	const prompt = options.prompt ?? t().pickFolderDefault;
 	const os = platform();
 	if (os === 'darwin') {
 		return pickMacFolder(prompt);
@@ -276,7 +276,7 @@ export const pickFolder = async (
 export const pickFile = async (
 	options: PickOptions = {},
 ): Promise<PickPathResult> => {
-	const prompt = options.prompt ?? defaultFilePrompt;
+	const prompt = options.prompt ?? t().pickFileDefault;
 	const os = platform();
 	if (os === 'darwin') {
 		return pickMacFile(prompt);

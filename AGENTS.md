@@ -8,7 +8,7 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 
 Architecture is **MVP**: `SessionPresenter` owns the session FSM; Ink is a thin View over an immutable `AppViewModel`. Domain lives in `source/core` (no React/Ink); UI + Node adapters live in `source/tui`. Future GUI can bind the same Presenter.
 
-- **UI language:** Russian only (`source/tui/i18n/ru.ts`)
+- **UI language:** system locale — `ru*` → Russian, otherwise English (`source/tui/i18n/`)
 - **Photos:** `sharp` (quality, megapixel downscale, format JPEG/WebP/same)
 - **Videos:** system `ffmpeg` → H.264 + AAC in MP4 (CRF, max height)
 - **Output:** replace in place **or** sibling `*_compressed.*`
@@ -103,7 +103,7 @@ Wizard steps (see `core/wizard-nav.ts` + `tui/ui/wizard-titles.ts`):
 ## Conventions for changes
 
 1. **Prefer `type` over `interface`**.
-2. Russian strings only in `tui/i18n/ru.ts`.
+2. UI strings only in `tui/i18n/` (`ru.ts` / `en.ts`); locale from `os-locale` via `resolveUiLocale` (env + OS; `C`/`C.UTF-8` ignored so macOS `AppleLocale` applies).
 3. New wizard step → `tui/wizard/` + `wizard-nav` / titles.
 4. New screen → `tui/screens/` + branch in `tui/App.tsx` (render only; logic in Presenter).
 5. Tests import from **`dist/`** (after `tsc`). Presenter tests use fake ports; Ink smoke via `ink-testing-library`.
@@ -125,7 +125,7 @@ Wizard steps (see `core/wizard-nav.ts` + `tui/ui/wizard-titles.ts`):
 
 ## Out of scope (v1 — do not add unless requested)
 
-- English / i18n switcher for TUI
+- Manual UI language switcher (locale follows the OS)
 - Bundled ffmpeg binary
 - Desktop GUI (Electron/Tauri) — Presenter is ready; ship separately
 - Full EXIF preservation

@@ -1,11 +1,9 @@
-const stepTitles: Record<number, string> = {
-	1: 'Папка',
-	2: 'Типы файлов',
-	3: 'Пороги размера',
-	4: 'Настройки фото',
-	5: 'Настройки видео',
-	6: 'Вывод, воркеры и логи',
-	7: 'Готово к сканированию',
-};
+import {t} from '../i18n/index.js';
 
-export const wizardStepTitle = (step: number): string => stepTitles[step] ?? '';
+export const wizardStepTitle = (step: number): string => {
+	if (step >= 1 && step <= 7) {
+		return t.wizardStepTitle[step as 1 | 2 | 3 | 4 | 5 | 6 | 7];
+	}
+
+	return '';
+};

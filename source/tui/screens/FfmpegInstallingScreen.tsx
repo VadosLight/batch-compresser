@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 import Spinner from 'ink-spinner';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 
 type Props = {
 	failed?: boolean;
@@ -12,10 +12,10 @@ export default function FfmpegInstallingScreen({failed, errorMessage}: Props) {
 	if (failed) {
 		return (
 			<Box flexDirection="column">
-				<Text color="red">{ru.ffmpegInstallFailed}</Text>
+				<Text color="red">{t.ffmpegInstallFailed}</Text>
 				{errorMessage ? <Text dimColor>{errorMessage}</Text> : null}
-				<Text dimColor>{ru.ffmpegInstallRetry}</Text>
-				<Text dimColor>{ru.ffmpegInstallEsc}</Text>
+				<Text dimColor>{t.ffmpegInstallRetry}</Text>
+				<Text dimColor>{t.ffmpegInstallEsc}</Text>
 			</Box>
 		);
 	}
@@ -23,7 +23,7 @@ export default function FfmpegInstallingScreen({failed, errorMessage}: Props) {
 	return (
 		<Box flexDirection="column">
 			<Text>
-				<Spinner type="dots" /> {ru.ffmpegInstalling}
+				<Spinner type="dots" /> {t.ffmpegInstalling}
 			</Text>
 		</Box>
 	);

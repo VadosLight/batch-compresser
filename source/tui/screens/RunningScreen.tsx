@@ -5,7 +5,7 @@ import type {
 	ActiveJobProgress,
 	ProgressEvent,
 } from '../../core/compress/run.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import type {MediaKind} from '../../core/types.js';
 import {formatJobLabel} from '../ui/job-label.js';
 
@@ -40,52 +40,52 @@ const statusLabel = (
 	status: string | undefined,
 ): string => {
 	if (status === 'stage') {
-		return ru.videoStatusStage;
+		return t.videoStatusStage;
 	}
 
 	if (kind === 'video') {
 		switch (status) {
 			case 'probe': {
-				return ru.videoStatusProbe;
+				return t.videoStatusProbe;
 			}
 
 			case 'encode': {
-				return ru.videoStatusEncode;
+				return t.videoStatusEncode;
 			}
 
 			case 'finalize': {
-				return ru.videoStatusFinalize;
+				return t.videoStatusFinalize;
 			}
 
 			case 'done': {
-				return ru.videoStatusDone;
+				return t.videoStatusDone;
 			}
 
 			default: {
-				return ru.videoStatusEncode;
+				return t.videoStatusEncode;
 			}
 		}
 	}
 
 	if (kind === 'photo') {
-		return ru.photoStatusCompress;
+		return t.photoStatusCompress;
 	}
 
-	return ru.processing;
+	return t.processing;
 };
 
 const adviceLabel = (advice: ResourceAdvice['advice']): string => {
 	switch (advice) {
 		case 'increase': {
-			return ru.workerAdviceIncrease;
+			return t.workerAdviceIncrease;
 		}
 
 		case 'decrease': {
-			return ru.workerAdviceDecrease;
+			return t.workerAdviceDecrease;
 		}
 
 		default: {
-			return ru.workerAdviceOk;
+			return t.workerAdviceOk;
 		}
 	}
 };
@@ -196,31 +196,29 @@ export default function RunningScreen({
 	return (
 		<Box flexDirection="column">
 			<Text>
-				<Spinner type="dots" /> {ru.batchProgress(done, total)}
+				<Spinner type="dots" /> {t.batchProgress(done, total)}
 				{done > 0
-					? ` · ${ru.batchSaved(bytesBefore, bytesAfter, saved, savedPct)}`
+					? ` · ${t.batchSaved(bytesBefore, bytesAfter, saved, savedPct)}`
 					: ''}
 			</Text>
 			<Text>
-				{ru.activeJobs}: {jobs.length}
+				{t.activeJobs}: {jobs.length}
 			</Text>
 			{showWorkers ? (
 				<Text>
-					{ru.videoWorkersLive(videoWorkers)}
+					{t.videoWorkersLive(videoWorkers)}
 					{' · '}
-					{ru.resourceLoad(resourceAdvice.loadPerCore, resourceAdvice.cpuCount)}
+					{t.resourceLoad(resourceAdvice.loadPerCore, resourceAdvice.cpuCount)}
 					{' · '}
 					{adviceLabel(resourceAdvice.advice)}
 				</Text>
 			) : null}
 			{videoJobs.length > 0 || showWorkers ? (
-				<Text dimColor>{ru.skipHint}</Text>
+				<Text dimColor>{t.skipHint}</Text>
 			) : null}
 			{openFolderError ? <Text color="red">{openFolderError}</Text> : null}
 			{confirmSkip && focusedPath ? (
-				<Text color="yellow">
-					{ru.skipConfirm(formatJobLabel(focusedPath))}
-				</Text>
+				<Text color="yellow">{t.skipConfirm(formatJobLabel(focusedPath))}</Text>
 			) : null}
 			{jobs.map(job => {
 				const focused = job.kind === 'video' && job.path === focusedPath;
@@ -229,9 +227,7 @@ export default function RunningScreen({
 						<Text color={focused ? 'yellow' : undefined}>
 							{focused ? '> ' : '  '}
 							{formatJobLabel(job.path)} — {statusLabel(job.kind, job.status)}
-							{job.kind === 'video'
-								? ` (${ru.kindVideo})`
-								: ` (${ru.kindPhoto})`}
+							{job.kind === 'video' ? ` (${t.kindVideo})` : ` (${t.kindPhoto})`}
 						</Text>
 						{job.kind === 'video' ? (
 							<Text color="cyan">{progressBar(job.filePercent)}</Text>

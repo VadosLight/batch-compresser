@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
 import Select from '../components/Select.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import {
 	getPreset,
 	megapixelChoices,
@@ -26,12 +26,12 @@ export default function PhotoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'format') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.photoFormat}</Text>
+				<Text>{t.photoFormat}</Text>
 				<Select
 					items={[
-						{label: ru.formatSame, value: 'same' as PhotoFormatMode},
-						{label: ru.formatJpeg, value: 'jpeg'},
-						{label: ru.formatWebp, value: 'webp'},
+						{label: t.formatSame, value: 'same' as PhotoFormatMode},
+						{label: t.formatJpeg, value: 'jpeg'},
+						{label: t.formatWebp, value: 'webp'},
 					]}
 					initialValue={settings.photoFormat}
 					onSelect={v => {
@@ -46,7 +46,7 @@ export default function PhotoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'mp') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.megapixels}</Text>
+				<Text>{t.megapixels}</Text>
 				<Select
 					items={megapixelChoices.map(c => ({
 						label: c.label,
@@ -65,14 +65,20 @@ export default function PhotoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'preset') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.qualityPreset}</Text>
+				<Text>{t.qualityPreset}</Text>
 				<Select
 					items={[
 						...qualityPresets.map(p => ({
-							label: `${p.label} (q=${p.photoQuality})`,
+							label: `${
+								p.id === 'high'
+									? t.qualityHigh
+									: p.id === 'medium'
+									? t.qualityMedium
+									: t.qualityLow
+							} (q=${p.photoQuality})`,
 							value: p.id as QualityPresetId,
 						})),
-						{label: 'Свой', value: 'custom' as QualityPresetId},
+						{label: t.customPreset, value: 'custom' as QualityPresetId},
 					]}
 					initialValue={settings.photoPreset}
 					onSelect={id => {
@@ -96,7 +102,7 @@ export default function PhotoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'quality') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.photoQuality}:</Text>
+				<Text>{t.photoQuality}:</Text>
 				<TextInput
 					value={qualityDraft}
 					onChange={setQualityDraft}
@@ -118,16 +124,19 @@ export default function PhotoStep({settings, patch, onNext}: WizardNavProps) {
 	return (
 		<Box flexDirection="column">
 			<Text>
-				Формат: {settings.photoFormat}, Мп: {settings.megapixels || 'без изм.'},
-				качество: {settings.photoQuality}
+				{t.photoSummary(
+					settings.photoFormat,
+					settings.megapixels ? String(settings.megapixels) : t.mpUnchanged,
+					settings.photoQuality,
+				)}
 			</Text>
 			<Select
 				items={[
-					{label: 'Формат', value: 'format'},
-					{label: 'Мегапиксели', value: 'mp'},
-					{label: 'Пресет качества', value: 'preset'},
-					{label: 'Число качества', value: 'quality'},
-					{label: '→ Далее', value: 'next'},
+					{label: t.menuFormat, value: 'format'},
+					{label: t.menuMp, value: 'mp'},
+					{label: t.menuQualityPreset, value: 'preset'},
+					{label: t.menuQualityNumber, value: 'quality'},
+					{label: t.nextArrow, value: 'next'},
 				]}
 				initialValue="next"
 				onSelect={v => {

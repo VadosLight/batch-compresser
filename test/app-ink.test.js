@@ -133,10 +133,12 @@ test('App renders wizard after boot when ffmpeg is available', async t => {
 	const instance = renderApp(React.createElement(App, {presenter}));
 	const frame = await waitForFrame(
 		instance,
-		text => text.includes('Batch Compresser') && text.includes('Шаг'),
+		text =>
+			text.includes('Batch Compresser') &&
+			(text.includes('Шаг') || text.includes('Step')),
 	);
 	t.true(frame.includes('Batch Compresser'));
-	t.true(frame.includes('Шаг'));
+	t.true(frame.includes('Шаг') || frame.includes('Step'));
 	t.is(presenter.getViewModel().screen, 'wizard');
 	instance.unmount();
 });
@@ -157,7 +159,10 @@ test('App Escape on ffmpeg warn continues photos-only via command path', async t
 		},
 	});
 	const instance = renderApp(React.createElement(App, {presenter}));
-	await waitForFrame(instance, text => text.includes('не найден'));
+	await waitForFrame(
+		instance,
+		text => text.includes('не найден') || text.includes('not found'),
+	);
 	t.is(presenter.getViewModel().screen, 'ffmpegWarn');
 
 	instance.stdin.pushKey('\u001B');

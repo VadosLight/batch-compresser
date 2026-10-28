@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Text} from 'ink';
 import type {FfmpegInstallPlan} from '../../core/ffmpeg-install.js';
 import {formatInstallCommand} from '../../core/ffmpeg-install.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 
 type Props = {
 	plan?: FfmpegInstallPlan;
@@ -11,18 +11,18 @@ type Props = {
 export default function FfmpegWarnScreen({plan}: Props) {
 	return (
 		<Box flexDirection="column">
-			<Text color="yellow">{ru.ffmpegMissing}</Text>
+			<Text color="yellow">{t.ffmpegMissing}</Text>
 			{plan ? (
 				<>
-					<Text>{ru.ffmpegInstallPrompt(plan.label)}</Text>
+					<Text>{t.ffmpegInstallPrompt(plan.label)}</Text>
 					<Text dimColor>{formatInstallCommand(plan)}</Text>
-					<Text dimColor>{ru.ffmpegInstallEnter}</Text>
-					<Text dimColor>{ru.ffmpegInstallEsc}</Text>
+					<Text dimColor>{t.ffmpegInstallEnter}</Text>
+					<Text dimColor>{t.ffmpegInstallEsc}</Text>
 				</>
 			) : (
 				<>
-					<Text dimColor>{ru.ffmpegInstallManual}</Text>
-					<Text dimColor>{ru.ffmpegOnlyPhotos} — Enter / Esc</Text>
+					<Text dimColor>{t.ffmpegInstallManual}</Text>
+					<Text dimColor>{t.ffmpegOnlyPhotos} — Enter / Esc</Text>
 				</>
 			)}
 		</Box>

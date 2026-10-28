@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 import Select from '../components/Select.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 type Props = WizardNavProps & {
@@ -17,22 +17,26 @@ export default function MediaTypesStep({
 	return (
 		<Box flexDirection="column">
 			<Text>
-				Фото: {settings.processPhotos ? ru.yes : ru.no} · Видео:{' '}
-				{settings.processVideos ? ru.yes : ru.no}
+				{t.mediaSummary(
+					settings.processPhotos ? t.yes : t.no,
+					settings.processVideos ? t.yes : t.no,
+				)}
 			</Text>
 			<Select
 				items={[
 					{
-						label: settings.processPhotos ? 'Выключить фото' : 'Включить фото',
+						label: settings.processPhotos ? t.togglePhotoOff : t.togglePhotoOn,
 						value: 'toggle-photo',
 					},
 					{
 						label: settings.processVideos
-							? 'Выключить видео'
-							: `Включить видео${ffmpegAvailable ? '' : ' (нет ffmpeg)'}`,
+							? t.toggleVideoOff
+							: ffmpegAvailable
+							? t.toggleVideoOn
+							: t.toggleVideoNoFfmpeg,
 						value: 'toggle-video',
 					},
-					{label: '→ Далее', value: 'next'},
+					{label: t.nextArrow, value: 'next'},
 				]}
 				initialValue="next"
 				onSelect={v => {

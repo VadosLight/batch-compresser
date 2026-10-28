@@ -2,8 +2,8 @@ import React from 'react';
 import {Box, Text} from 'ink';
 import type {DurationTier} from '../../core/duration.js';
 import type {RunSummary} from '../../core/types.js';
-import {formatBytes, ru} from '../i18n/ru.js';
-import {buildCelebration, formatDurationRu} from '../ui/celebration.js';
+import {formatBytes, t} from '../i18n/index.js';
+import {buildCelebration, formatDurationUi} from '../ui/celebration.js';
 
 type Props = {
 	summary: RunSummary;
@@ -25,7 +25,7 @@ export default function SummaryScreen({summary}: Props) {
 	const saved = summary.bytesBefore - summary.bytesAfter;
 	const pct = summary.bytesBefore > 0 ? (saved / summary.bytesBefore) * 100 : 0;
 	const celebration = buildCelebration(summary);
-	const elapsedLabel = formatDurationRu(summary.elapsedMs);
+	const elapsedLabel = formatDurationUi(summary.elapsedMs);
 
 	return (
 		<Box flexDirection="column">
@@ -38,7 +38,7 @@ export default function SummaryScreen({summary}: Props) {
 			<Text>{celebration.subtitle}</Text>
 			<Box marginTop={1}>
 				<Text>
-					{ru.summaryStats({
+					{t.summaryStats({
 						elapsedLabel,
 						compressed: summary.compressed,
 						before: formatBytes(summary.bytesBefore),
@@ -48,23 +48,23 @@ export default function SummaryScreen({summary}: Props) {
 				</Text>
 			</Box>
 			<Box marginTop={1} flexDirection="column">
-				<Text dimColor>{ru.foundFiles(summary.found)}</Text>
-				<Text dimColor>{ru.skipSmall(summary.skipSmall)}</Text>
-				<Text dimColor>{ru.skipCompressed(summary.skipCompressed)}</Text>
-				<Text dimColor>{ru.skipPrevious(summary.skipPrevious)}</Text>
-				<Text dimColor>{ru.skipUser(summary.skipUser)}</Text>
-				<Text dimColor>{ru.skipLarger(summary.skipLarger)}</Text>
-				<Text dimColor>{ru.skipLowGain(summary.skipLowGain)}</Text>
+				<Text dimColor>{t.foundFiles(summary.found)}</Text>
+				<Text dimColor>{t.skipSmall(summary.skipSmall)}</Text>
+				<Text dimColor>{t.skipCompressed(summary.skipCompressed)}</Text>
+				<Text dimColor>{t.skipPrevious(summary.skipPrevious)}</Text>
+				<Text dimColor>{t.skipUser(summary.skipUser)}</Text>
+				<Text dimColor>{t.skipLarger(summary.skipLarger)}</Text>
+				<Text dimColor>{t.skipLowGain(summary.skipLowGain)}</Text>
 				<Text
 					color={summary.errors ? 'red' : undefined}
 					dimColor={!summary.errors}
 				>
-					{ru.errors(summary.errors)}
+					{t.errors(summary.errors)}
 				</Text>
 			</Box>
-			<Text>{ru.logPath(summary.logPath)}</Text>
+			<Text>{t.logPath(summary.logPath)}</Text>
 			<Box marginTop={1}>
-				<Text dimColor>{ru.done}</Text>
+				<Text dimColor>{t.done}</Text>
 			</Box>
 		</Box>
 	);

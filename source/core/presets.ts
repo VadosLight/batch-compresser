@@ -8,10 +8,11 @@ export type QualityPreset = {
 	videoCrf: number;
 };
 
+/** Labels are English fallbacks; TUI localizes via i18n by `id`. */
 export const qualityPresets: readonly QualityPreset[] = [
-	{id: 'high', label: 'Высокое', photoQuality: 90, videoCrf: 18},
-	{id: 'medium', label: 'Среднее', photoQuality: 80, videoCrf: 23},
-	{id: 'low', label: 'Низкое', photoQuality: 60, videoCrf: 28},
+	{id: 'high', label: 'High', photoQuality: 90, videoCrf: 18},
+	{id: 'medium', label: 'Medium', photoQuality: 80, videoCrf: 23},
+	{id: 'low', label: 'Low', photoQuality: 60, videoCrf: 28},
 ] as const;
 
 export const getPreset = (id: QualityPresetId): QualityPreset | undefined =>
@@ -32,19 +33,19 @@ export const megapixelChoices: ReadonlyArray<{
 	value: 0 | 1 | 2 | 4 | 8 | 12;
 	label: string;
 }> = [
-	{value: 0, label: 'Без изменения'},
-	{value: 12, label: '12 Мп'},
-	{value: 8, label: '8 Мп'},
-	{value: 4, label: '4 Мп'},
-	{value: 2, label: '2 Мп'},
-	{value: 1, label: '1 Мп'},
+	{value: 0, label: 'Unchanged'},
+	{value: 12, label: '12 MP'},
+	{value: 8, label: '8 MP'},
+	{value: 4, label: '4 MP'},
+	{value: 2, label: '2 MP'},
+	{value: 1, label: '1 MP'},
 ];
 
 export const videoHeightChoices: ReadonlyArray<{
 	value: 0 | 480 | 720 | 1080;
 	label: string;
 }> = [
-	{value: 0, label: 'Исходное'},
+	{value: 0, label: 'Source'},
 	{value: 1080, label: '1080p'},
 	{value: 720, label: '720p'},
 	{value: 480, label: '480p'},

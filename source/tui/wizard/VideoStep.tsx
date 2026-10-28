@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
 import Select from '../components/Select.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import {
 	getPreset,
 	qualityPresets,
@@ -18,14 +18,14 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'preset') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.qualityPreset}</Text>
+				<Text>{t.qualityPreset}</Text>
 				<Select
 					items={[
 						...qualityPresets.map(p => ({
 							label: `${p.label} (CRF=${p.videoCrf})`,
 							value: p.id as QualityPresetId,
 						})),
-						{label: 'Свой', value: 'custom' as QualityPresetId},
+						{label: t.customPreset, value: 'custom' as QualityPresetId},
 					]}
 					initialValue={settings.videoPreset}
 					onSelect={id => {
@@ -46,7 +46,7 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'crf') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.videoCrf}:</Text>
+				<Text>{t.videoCrf}:</Text>
 				<TextInput
 					value={crfDraft}
 					onChange={setCrfDraft}
@@ -68,10 +68,10 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 	if (sub === 'height') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.videoHeight}</Text>
+				<Text>{t.videoHeight}</Text>
 				<Select
 					items={videoHeightChoices.map(c => ({
-						label: c.label,
+						label: c.value === 0 ? t.heightSource : t.heightNp(c.value),
 						value: c.value,
 					}))}
 					initialValue={settings.videoMaxHeight}
@@ -87,36 +87,39 @@ export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 	return (
 		<Box flexDirection="column">
 			<Text>
-				CRF: {settings.videoCrf}, высота:{' '}
-				{settings.videoMaxHeight || 'исходное'}
+				{t.videoSummary(
+					settings.videoCrf,
+					settings.videoMaxHeight
+						? String(settings.videoMaxHeight)
+						: t.heightSource,
+				)}
 			</Text>
 			<Text>
-				{ru.videosSmallFirst}: {settings.videosSmallFirst ? ru.yes : ru.no}
+				{t.videosSmallFirst}: {settings.videosSmallFirst ? t.yes : t.no}
 			</Text>
-			<Text dimColor>{ru.videosSmallFirstHint}</Text>
+			<Text dimColor>{t.videosSmallFirstHint}</Text>
 			<Text>
-				{ru.videoScanAllFormats}:{' '}
-				{settings.videoScanAllFormats ? ru.on : ru.off}
+				{t.videoScanAllFormats}: {settings.videoScanAllFormats ? t.on : t.off}
 			</Text>
-			<Text dimColor>{ru.videoScanAllFormatsHint}</Text>
+			<Text dimColor>{t.videoScanAllFormatsHint}</Text>
 			<Select
 				items={[
-					{label: 'Пресет', value: 'preset'},
-					{label: 'CRF числом', value: 'crf'},
-					{label: 'Макс. высота', value: 'height'},
+					{label: t.menuPreset, value: 'preset'},
+					{label: t.menuCrf, value: 'crf'},
+					{label: t.menuHeight, value: 'height'},
 					{
 						label: settings.videosSmallFirst
-							? 'Выключить «сначала маленькие»'
-							: 'Включить «сначала маленькие»',
+							? t.toggleSmallFirstOff
+							: t.toggleSmallFirstOn,
 						value: 'toggle-small-first',
 					},
 					{
 						label: settings.videoScanAllFormats
-							? `Выключить «${ru.videoScanAllFormats}»`
-							: `Включить «${ru.videoScanAllFormats}»`,
+							? t.toggleScanAllOff(t.videoScanAllFormats)
+							: t.toggleScanAllOn(t.videoScanAllFormats),
 						value: 'toggle-scan-formats',
 					},
-					{label: '→ Далее', value: 'next'},
+					{label: t.nextArrow, value: 'next'},
 				]}
 				initialValue="next"
 				onSelect={v => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Text} from 'ink';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import type {CompressSettings} from '../../core/types.js';
 
 type Props = {
@@ -20,60 +20,65 @@ export default function ConfirmScreen({
 }: Props) {
 	const workerParts: string[] = [];
 	if (settings.processPhotos) {
-		workerParts.push(`фото ${settings.photoWorkers}`);
+		workerParts.push(t.workerPhoto(settings.photoWorkers));
 	}
 
 	if (settings.processVideos) {
-		workerParts.push(`видео ${settings.videoWorkers}`);
+		workerParts.push(t.workerVideo(settings.videoWorkers));
 	}
 
 	return (
 		<Box flexDirection="column">
-			<Text bold>{ru.confirmTitle}</Text>
-			<Text>Папка: {settings.rootDir}</Text>
-			<Text>{ru.foundFiles(scanCount)}</Text>
+			<Text bold>{t.confirmTitle}</Text>
+			<Text>{t.confirmFolder(settings.rootDir)}</Text>
+			<Text>{t.foundFiles(scanCount)}</Text>
 			<Text dimColor>
-				{ru.skipSmall(skipSmall)} · {ru.skipCompressed(skipCompressed)}
-				{skipPrevious > 0 ? ` · ${ru.skipPrevious(skipPrevious)}` : ''}
+				{t.skipSmall(skipSmall)} · {t.skipCompressed(skipCompressed)}
+				{skipPrevious > 0 ? ` · ${t.skipPrevious(skipPrevious)}` : ''}
 			</Text>
-			<Text>
-				Режим: {settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'}
-			</Text>
+			<Text>{t.confirmMode(settings.replaceFiles)}</Text>
 			{settings.processPhotos ? (
 				<Text>
-					Фото: мин {settings.minPhotoMb} МБ, {settings.megapixels || '∞'} Мп,
-					q=
-					{settings.photoQuality}
+					{t.confirmPhoto({
+						minMb: settings.minPhotoMb,
+						mpLabel: settings.megapixels
+							? String(settings.megapixels)
+							: t.mpUnlimited,
+						quality: settings.photoQuality,
+					})}
 				</Text>
 			) : null}
 			{settings.processVideos ? (
 				<Text>
-					Видео: мин {settings.minVideoMb} МБ, CRF={settings.videoCrf}, высота=
-					{settings.videoMaxHeight || 'исх.'}
-					{settings.videosSmallFirst
-						? `, ${ru.videosSmallFirst.toLowerCase()}`
-						: ''}
-					,{' '}
-					{settings.videoScanAllFormats
-						? ru.videoScanAllFormatsOn
-						: ru.videoScanAllFormatsOff}
+					{t.confirmVideo({
+						minMb: settings.minVideoMb,
+						crf: settings.videoCrf,
+						heightLabel: settings.videoMaxHeight
+							? String(settings.videoMaxHeight)
+							: t.heightSourceShort,
+						smallFirstSuffix: settings.videosSmallFirst
+							? `, ${t.videosSmallFirst.toLowerCase()}`
+							: '',
+						scanFormats: settings.videoScanAllFormats
+							? t.videoScanAllFormatsOn
+							: t.videoScanAllFormatsOff,
+					})}
 				</Text>
 			) : null}
 			{workerParts.length > 0 ? (
-				<Text>Воркеры: {workerParts.join(', ')}</Text>
+				<Text>{t.confirmWorkers(workerParts.join(', '))}</Text>
 			) : null}
 			<Text>
-				Staging: {settings.stageToFastDisk ? ru.yes : ru.no}
-				{settings.stageToFastDisk ? ` → ${settings.stageDir}` : ''}
+				{t.confirmStaging(settings.stageToFastDisk, settings.stageDir)}
 			</Text>
 			{settings.previousLogsPath.trim() ? (
 				<Text>
-					{ru.previousLogsPath}: {settings.previousLogsPath.trim()}
+					{t.previousLogsPath}: {settings.previousLogsPath.trim()}
 				</Text>
 			) : null}
 			<Box marginTop={1} flexDirection="column">
-				<Text color="green">{ru.confirmStart}</Text>
-				<Text dimColor>{ru.confirmCancel}</Text>
+				<Text color="green">{t.confirmStart}</Text>
+				<Text dimColor>{t.confirmCancel}</Text>
 			</Box>
 		</Box>
 	);

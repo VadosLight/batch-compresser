@@ -5,7 +5,7 @@ import Spinner from 'ink-spinner';
 import Select, {type SelectItem} from '../components/Select.js';
 import {pickFolder} from '../adapters/pick-folder.js';
 import {validateDirectory} from '../../core/fs/validate-dir.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import type {PatchSettings} from '../../core/wizard-nav.js';
 
 type PathAction = 'type' | 'browse' | 'next';
@@ -39,7 +39,7 @@ export default function PathStep({
 		setLocalError(undefined);
 		const result = await validateDirectory(raw);
 		if (!result.ok) {
-			setLocalError(ru.pathError[result.reason]);
+			setLocalError(t.pathError[result.reason]);
 			setMode('menu');
 			return;
 		}
@@ -56,7 +56,7 @@ export default function PathStep({
 		const picked = await pickFolder();
 		if (!picked.ok) {
 			if (!picked.cancelled) {
-				setLocalError(picked.message ?? ru.folderPickerFailed);
+				setLocalError(picked.message ?? t.folderPickerFailed);
 			}
 
 			setMode('menu');
@@ -70,7 +70,7 @@ export default function PathStep({
 		return (
 			<Box flexDirection="column">
 				<Text>
-					<Spinner type="dots" /> {ru.folderPickerOpen}
+					<Spinner type="dots" /> {t.folderPickerOpen}
 				</Text>
 			</Box>
 		);
@@ -79,7 +79,7 @@ export default function PathStep({
 	if (mode === 'typing') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.pathPrompt}:</Text>
+				<Text>{t.pathPrompt}:</Text>
 				<TextInput
 					value={draft}
 					onChange={value => {
@@ -91,25 +91,25 @@ export default function PathStep({
 					}}
 				/>
 				{localError ? <Text color="red">{localError}</Text> : null}
-				<Text dimColor>Enter — проверить и далее · Esc — меню</Text>
+				<Text dimColor>{t.enterValidateNext}</Text>
 			</Box>
 		);
 	}
 
-	const typeLabel: string = ru.pathTypeManually;
-	const browseLabel: string = ru.pathOpenExplorer;
+	const typeLabel: string = t.pathTypeManually;
+	const browseLabel: string = t.pathOpenExplorer;
 	const menuItems: Array<SelectItem<PathAction>> = [
 		{label: typeLabel, value: 'type'},
 		{label: browseLabel, value: 'browse'},
-		{label: '→ Далее', value: 'next'},
+		{label: t.nextArrow, value: 'next'},
 	];
 
 	return (
 		<Box flexDirection="column">
 			<Text>
-				{ru.pathPrompt}:{' '}
+				{t.pathPrompt}:{' '}
 				<Text color={pathDraft ? 'green' : 'yellow'}>
-					{pathDraft || ru.pathNotSet}
+					{pathDraft || t.pathNotSet}
 				</Text>
 			</Text>
 			{localError ? <Text color="red">{localError}</Text> : null}

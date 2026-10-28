@@ -5,7 +5,7 @@ import Spinner from 'ink-spinner';
 import Select from '../components/Select.js';
 import {pickFile, pickFolder} from '../adapters/pick-folder.js';
 import {validateLogsPath} from '../../core/fs/previous-logs.js';
-import {ru} from '../i18n/ru.js';
+import {t} from '../i18n/index.js';
 import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 type EditMode =
@@ -43,7 +43,7 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 
 		const result = await validateLogsPath(trimmed);
 		if (!result.ok) {
-			setLocalError(ru.previousLogsError[result.reason]);
+			setLocalError(t.previousLogsError[result.reason]);
 			setEditMode('previous-logs');
 			return;
 		}
@@ -57,12 +57,12 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 		setEditMode('previous-logs-picking');
 		const picked =
 			kind === 'folder'
-				? await pickFolder({prompt: ru.previousLogsPickFolderPrompt})
-				: await pickFile({prompt: ru.previousLogsPickFilePrompt});
+				? await pickFolder({prompt: t.previousLogsPickFolderPrompt})
+				: await pickFile({prompt: t.previousLogsPickFilePrompt});
 
 		if (!picked.ok) {
 			if (!picked.cancelled) {
-				setLocalError(picked.message ?? ru.folderPickerFailed);
+				setLocalError(picked.message ?? t.folderPickerFailed);
 			}
 
 			setEditMode('previous-logs');
@@ -76,7 +76,7 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					<Spinner type="dots" /> {ru.folderPickerOpen}
+					<Spinner type="dots" /> {t.folderPickerOpen}
 				</Text>
 			</Box>
 		);
@@ -85,8 +85,8 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 	if (editMode === 'previous-logs-type') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.previousLogsPath}:</Text>
-				<Text dimColor>{ru.previousLogsHint}</Text>
+				<Text>{t.previousLogsPath}:</Text>
+				<Text dimColor>{t.previousLogsHint}</Text>
 				<TextInput
 					value={draft}
 					onChange={value => {
@@ -98,7 +98,7 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 					}}
 				/>
 				{localError ? <Text color="red">{localError}</Text> : null}
-				<Text dimColor>Enter — сохранить · Esc — назад</Text>
+				<Text dimColor>{t.enterSaveBack}</Text>
 			</Box>
 		);
 	}
@@ -107,22 +107,22 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					{ru.previousLogsPath}:{' '}
+					{t.previousLogsPath}:{' '}
 					<Text color={settings.previousLogsPath.trim() ? 'green' : 'yellow'}>
-						{settings.previousLogsPath.trim() || ru.pathNotSet}
+						{settings.previousLogsPath.trim() || t.pathNotSet}
 					</Text>
 				</Text>
-				<Text dimColor>{ru.previousLogsHint}</Text>
+				<Text dimColor>{t.previousLogsHint}</Text>
 				{localError ? <Text color="red">{localError}</Text> : null}
 				<Select
 					items={[
-						{label: ru.pathTypeManually, value: 'type'},
-						{label: ru.previousLogsOpenFolder, value: 'browse-folder'},
-						{label: ru.previousLogsOpenFile, value: 'browse-file'},
+						{label: t.pathTypeManually, value: 'type'},
+						{label: t.previousLogsOpenFolder, value: 'browse-folder'},
+						{label: t.previousLogsOpenFile, value: 'browse-file'},
 						...(settings.previousLogsPath.trim()
-							? [{label: ru.previousLogsClear, value: 'clear' as const}]
+							? [{label: t.previousLogsClear, value: 'clear' as const}]
 							: []),
-						{label: '← Назад', value: 'back'},
+						{label: t.backArrow, value: 'back'},
 					]}
 					initialValue="browse-folder"
 					onSelect={v => {
@@ -159,8 +159,8 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 	if (editMode === 'stage-dir') {
 		return (
 			<Box flexDirection="column">
-				<Text>{ru.stageDir}:</Text>
-				<Text dimColor>{ru.stageDirHint}</Text>
+				<Text>{t.stageDir}:</Text>
+				<Text dimColor>{t.stageDirHint}</Text>
 				<TextInput
 					value={draft}
 					onChange={setDraft}
@@ -179,8 +179,8 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 
 	if (editMode === 'photo' || editMode === 'video') {
 		const label: string =
-			editMode === 'photo' ? ru.photoWorkers : ru.videoWorkers;
-		const hint: string = ru.workersHint;
+			editMode === 'photo' ? t.photoWorkers : t.videoWorkers;
+		const hint: string = t.workersHint;
 		return (
 			<Box flexDirection="column">
 				<Text>{label}:</Text>
@@ -206,62 +206,62 @@ export default function OutputStep({settings, patch, onNext}: WizardNavProps) {
 		);
 	}
 
-	const previousLogsLabel = settings.previousLogsPath.trim() || ru.pathNotSet;
+	const previousLogsLabel = settings.previousLogsPath.trim() || t.pathNotSet;
 	const showPhotoWorkers = settings.processPhotos;
 	const showVideoWorkers = settings.processVideos;
 
 	return (
 		<Box flexDirection="column">
 			<Text>
-				{ru.replaceFiles}: {settings.replaceFiles ? ru.yes : ru.no}
+				{t.replaceFiles}: {settings.replaceFiles ? t.yes : t.no}
 			</Text>
 			{showPhotoWorkers ? (
 				<Text>
-					{ru.photoWorkers}: {settings.photoWorkers}
+					{t.photoWorkers}: {settings.photoWorkers}
 				</Text>
 			) : null}
 			{showVideoWorkers ? (
 				<Text>
-					{ru.videoWorkers}: {settings.videoWorkers}
+					{t.videoWorkers}: {settings.videoWorkers}
 				</Text>
 			) : null}
 			<Text>
-				{ru.stageToFastDisk}: {settings.stageToFastDisk ? ru.yes : ru.no}
+				{t.stageToFastDisk}: {settings.stageToFastDisk ? t.yes : t.no}
 			</Text>
 			{settings.stageToFastDisk ? (
 				<Text dimColor>
-					{ru.stageDir}: {settings.stageDir}
+					{t.stageDir}: {settings.stageDir}
 				</Text>
 			) : null}
 			<Text>
-				{ru.previousLogsPath}: {previousLogsLabel}
+				{t.previousLogsPath}: {previousLogsLabel}
 			</Text>
-			{showVideoWorkers ? <Text dimColor>{ru.stageHint}</Text> : null}
+			{showVideoWorkers ? <Text dimColor>{t.stageHint}</Text> : null}
 			<Select
 				items={[
 					{
 						label: settings.replaceFiles
-							? 'Переключить на «рядом *_compressed»'
-							: 'Переключить на полную замену',
+							? t.outputToggleToSibling
+							: t.outputToggleToReplace,
 						value: 'toggle-replace',
 					},
 					...(showPhotoWorkers
-						? [{label: 'Воркеры фото', value: 'photo-workers' as const}]
+						? [{label: t.outputPhotoWorkers, value: 'photo-workers' as const}]
 						: []),
 					...(showVideoWorkers
-						? [{label: 'Воркеры видео', value: 'video-workers' as const}]
+						? [{label: t.outputVideoWorkers, value: 'video-workers' as const}]
 						: []),
 					{
 						label: settings.stageToFastDisk
-							? 'Выключить staging на быстрый диск'
-							: 'Включить staging (HDD→SSD tmp)',
+							? t.outputStagingOff
+							: t.outputStagingOn,
 						value: 'toggle-stage',
 					},
 					...(settings.stageToFastDisk
-						? [{label: 'Путь staging-папки', value: 'stage-dir' as const}]
+						? [{label: t.outputStageDir, value: 'stage-dir' as const}]
 						: []),
-					{label: 'Путь к предыдущим логам', value: 'previous-logs'},
-					{label: '→ Далее', value: 'next'},
+					{label: t.outputPreviousLogs, value: 'previous-logs'},
+					{label: t.nextArrow, value: 'next'},
 				]}
 				initialValue="next"
 				onSelect={v => {
