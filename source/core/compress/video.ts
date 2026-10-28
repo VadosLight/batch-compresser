@@ -114,7 +114,7 @@ export const compressVideo = async (
 			? path.join(
 					path.dirname(commitPath),
 					`${path.basename(commitPath, path.extname(commitPath))}.mp4`,
-			  )
+				)
 			: undefined;
 
 		return await commitOutput({

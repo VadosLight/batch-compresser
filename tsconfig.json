@@ -4,11 +4,7 @@
 		"moduleResolution": "node16",
 		"moduleDetection": "force",
 		"target": "ES2022",
-		"lib": [
-			"DOM",
-			"DOM.Iterable",
-			"ES2022"
-		],
+		"lib": ["DOM", "DOM.Iterable", "ES2022"],
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": false,
 		"jsx": "react",
@@ -31,7 +27,5 @@
 		"rootDir": "./source",
 		"outDir": "dist"
 	},
-	"include": [
-		"source"
-	]
+	"include": ["source"]
 }

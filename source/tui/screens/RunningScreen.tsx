@@ -111,15 +111,15 @@ export default function RunningScreen({
 		activeJobs.length > 0
 			? activeJobs
 			: current
-			? [
-					{
-						path: current,
-						kind: kind ?? 'photo',
-						status: status ?? 'compress',
-						filePercent: filePercent ?? 0,
-					},
-			  ]
-			: [];
+				? [
+						{
+							path: current,
+							kind: kind ?? 'photo',
+							status: status ?? 'compress',
+							filePercent: filePercent ?? 0,
+						},
+					]
+				: [];
 
 	const videoJobs = jobs.filter(job => job.kind === 'video');
 	const videoPathsKey = videoJobs.map(job => job.path).join('\0');

@@ -35,7 +35,7 @@ Architecture is **MVP**: `SessionPresenter` owns the session FSM; Ink is a thin 
 | Videos      | system `ffmpeg` / `ffprobe` via `execa`                                         |
 | CLI flags   | `meow` (`--path` / `-p`)                                                        |
 | Concurrency | photos: `p-limit`; videos: adjustable limiter (`videoWorkers`, runtime `[`/`]`) |
-| Lint/test   | prettier, xo, ava (`test/**/*.test.js` against `dist/`)                         |
+| Lint/test   | oxfmt, oxlint, ava (`test/**/*.test.js` against `dist/`)                        |
 
 **Do not** reintroduce the npm `ffmpeg` package — only the system binary.
 
@@ -46,9 +46,13 @@ npm install
 npm run build          # tsc → dist/
 npm start              # node dist/tui/cli.js
 npm run mcp            # node dist/mcp/cli.js (stdio MCP)
-npm test               # prettier + xo + build + ava
+npm test               # oxfmt --check + oxlint + build + ava
+npm run lint           # oxlint
+npm run format         # oxfmt
 npm run dev            # tsc --watch
 ```
+
+Git hooks ([lefthook.yml](lefthook.yml)): `pre-commit` → oxfmt + oxlint + `tsc --noEmit`; `pre-push` → `npm test`. Installed via `prepare` (`lefthook install`).
 
 Bins: `batch-compressor` → `dist/tui/cli.js`; `batch-compressor-mcp` → `dist/mcp/cli.js`.
 

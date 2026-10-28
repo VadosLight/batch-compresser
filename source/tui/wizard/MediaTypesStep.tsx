@@ -32,8 +32,8 @@ export default function MediaTypesStep({
 						label: settings.processVideos
 							? t.toggleVideoOff
 							: ffmpegAvailable
-							? t.toggleVideoOn
-							: t.toggleVideoNoFfmpeg,
+								? t.toggleVideoOn
+								: t.toggleVideoNoFfmpeg,
 						value: 'toggle-video',
 					},
 					{label: t.nextArrow, value: 'next'},

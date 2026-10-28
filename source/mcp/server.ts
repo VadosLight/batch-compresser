@@ -227,7 +227,7 @@ export const createMcpServer = (session: McpSession): McpServer => {
 										...summary,
 										results: undefined,
 										resultCount: summary.results.length,
-								  }
+									}
 								: {},
 							null,
 							2,

@@ -73,8 +73,8 @@ export default function PhotoStep({settings, patch, onNext}: WizardNavProps) {
 								p.id === 'high'
 									? t.qualityHigh
 									: p.id === 'medium'
-									? t.qualityMedium
-									: t.qualityLow
+										? t.qualityMedium
+										: t.qualityLow
 							} (q=${p.photoQuality})`,
 							value: p.id as QualityPresetId,
 						})),

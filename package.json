@@ -15,7 +15,12 @@
 		"dev": "tsc --watch",
 		"start": "node dist/tui/cli.js",
 		"mcp": "node dist/mcp/cli.js",
-		"test": "prettier --check . && xo && npm run build && ava"
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
+		"format": "oxfmt",
+		"format:check": "oxfmt --check",
+		"test": "oxfmt --check && oxlint && npm run build && ava",
+		"prepare": "lefthook install"
 	},
 	"files": [
 		"dist"
@@ -35,50 +40,18 @@
 	},
 	"devDependencies": {
 		"@types/react": "^18.0.32",
-		"@vdemedes/prettier-config": "^2.0.1",
 		"ava": "^5.2.0",
 		"chalk": "^5.2.0",
-		"eslint-config-xo-react": "^0.27.0",
-		"eslint-plugin-react": "^7.32.2",
-		"eslint-plugin-react-hooks": "^4.6.0",
 		"ink-testing-library": "^3.0.0",
-		"prettier": "^2.8.7",
+		"lefthook": "^2.2.2",
+		"oxfmt": "^0.75.0",
+		"oxlint": "^1.90.0",
 		"ts-node": "^10.9.1",
-		"typescript": "^5.0.3",
-		"xo": "^0.53.1"
+		"typescript": "^5.0.3"
 	},
 	"ava": {
 		"files": [
 			"test/**/*.test.js"
 		]
-	},
-	"xo": {
-		"extends": "xo-react",
-		"prettier": true,
-		"ignores": [
-			"test/**",
-			"dist/**"
-		],
-		"rules": {
-			"react/prop-types": "off",
-			"react/prefer-read-only-props": "off",
-			"react/boolean-prop-naming": "off",
-			"react/no-array-index-key": "off",
-			"unicorn/expiring-todo-comments": "off",
-			"unicorn/filename-case": "off",
-			"unicorn/prevent-abbreviations": "off",
-			"unicorn/catch-error-name": "off",
-			"unicorn/prefer-ternary": "off",
-			"unicorn/prefer-switch": "off",
-			"unicorn/no-await-expression-member": "off",
-			"no-await-in-loop": "off",
-			"no-negated-condition": "off",
-			"capitalized-comments": "off",
-			"import/order": "off",
-			"@typescript-eslint/naming-convention": "off",
-			"@typescript-eslint/no-implicit-any-catch": "off",
-			"@typescript-eslint/no-unnecessary-type-assertion": "off"
-		}
-	},
-	"prettier": "@vdemedes/prettier-config"
+	}
 }

@@ -92,7 +92,7 @@ export const compressPhoto = async (
 				? commitPath.slice(
 						0,
 						commitPath.length - path.extname(commitPath).length,
-				  ) + ext
+					) + ext
 				: undefined;
 
 		return await commitOutput({
