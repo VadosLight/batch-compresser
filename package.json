@@ -2,7 +2,7 @@
 	"name": "batch-compresser",
 	"version": "0.0.0",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+	"bin": "dist/tui/cli.js",
 	"type": "module",
 	"engines": {
 		"node": ">=16"
@@ -10,7 +10,7 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",
-		"start": "node dist/cli.js",
+		"start": "node dist/tui/cli.js",
 		"test": "prettier --check . && xo && npm run build && ava"
 	},
 	"files": [

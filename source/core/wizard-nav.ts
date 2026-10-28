@@ -1,4 +1,4 @@
-import type {CompressSettings} from '../types.js';
+import type {CompressSettings} from './types.js';
 
 export type Screen =
 	| 'boot'
@@ -27,18 +27,6 @@ export type WizardNavContext = {
 
 /** Physical wizard step ids (1–7). Some are skipped when media type is off. */
 export const totalWizardSteps = 7;
-
-const stepTitles: Record<number, string> = {
-	1: 'Папка',
-	2: 'Типы файлов',
-	3: 'Пороги размера',
-	4: 'Настройки фото',
-	5: 'Настройки видео',
-	6: 'Вывод, воркеры и логи',
-	7: 'Готово к сканированию',
-};
-
-export const wizardStepTitle = (step: number): string => stepTitles[step] ?? '';
 
 export const isWizardStepEnabled = (
 	step: number,

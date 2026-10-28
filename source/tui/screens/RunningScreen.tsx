@@ -1,9 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text, useInput} from 'ink';
 import Spinner from 'ink-spinner';
-import type {ActiveJobProgress, ProgressEvent} from '../compress/run.js';
+import type {
+	ActiveJobProgress,
+	ProgressEvent,
+} from '../../core/compress/run.js';
 import {ru} from '../i18n/ru.js';
-import type {MediaKind} from '../types.js';
+import type {MediaKind} from '../../core/types.js';
 import {formatJobLabel} from '../ui/job-label.js';
 
 type ResourceAdvice = NonNullable<ProgressEvent['resourceAdvice']>;
@@ -205,7 +208,7 @@ export default function RunningScreen({
 				<Text>
 					{ru.videoWorkersLive(videoWorkers)}
 					{' · '}
-					{ru.resourceLoad(resourceAdvice.load1, resourceAdvice.cpuCount)}
+					{ru.resourceLoad(resourceAdvice.loadPerCore, resourceAdvice.cpuCount)}
 					{' · '}
 					{adviceLabel(resourceAdvice.advice)}
 				</Text>

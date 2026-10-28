@@ -1,12 +1,9 @@
 import React from 'react';
 import {Box, Text} from 'ink';
+import type {DurationTier} from '../../core/duration.js';
+import type {RunSummary} from '../../core/types.js';
 import {formatBytes, ru} from '../i18n/ru.js';
-import type {RunSummary} from '../types.js';
-import {
-	buildCelebration,
-	formatDuration,
-	type DurationTier,
-} from '../ui/summary-celebration.js';
+import {buildCelebration, formatDurationRu} from '../ui/celebration.js';
 
 type Props = {
 	summary: RunSummary;
@@ -28,7 +25,7 @@ export default function SummaryScreen({summary}: Props) {
 	const saved = summary.bytesBefore - summary.bytesAfter;
 	const pct = summary.bytesBefore > 0 ? (saved / summary.bytesBefore) * 100 : 0;
 	const celebration = buildCelebration(summary);
-	const elapsedLabel = formatDuration(summary.elapsedMs);
+	const elapsedLabel = formatDurationRu(summary.elapsedMs);
 
 	return (
 		<Box flexDirection="column">

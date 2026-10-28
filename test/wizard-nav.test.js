@@ -5,7 +5,7 @@ import {
 	prevWizardStep,
 	visibleWizardSteps,
 	wizardStepOrdinal,
-} from '../dist/ui/types.js';
+} from '../dist/core/wizard-nav.js';
 
 const both = {
 	processPhotos: true,

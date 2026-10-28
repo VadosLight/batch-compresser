@@ -3,10 +3,10 @@ import {Box, Text, useInput} from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
 import Select from '../components/Select.js';
-import {pickFile, pickFolder} from '../fs/pick-folder.js';
-import {validateLogsPath} from '../fs/previous-logs.js';
+import {pickFile, pickFolder} from '../adapters/pick-folder.js';
+import {validateLogsPath} from '../../core/fs/previous-logs.js';
 import {ru} from '../i18n/ru.js';
-import type {WizardNavProps} from '../ui/types.js';
+import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 type EditMode =
 	| false

@@ -1,5 +1,5 @@
 import test from 'ava';
-import {createConcurrencyLimiter} from '../dist/compress/concurrency.js';
+import {createConcurrencyLimiter} from '../dist/core/compress/concurrency.js';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 

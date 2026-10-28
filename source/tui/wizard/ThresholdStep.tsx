@@ -3,7 +3,7 @@ import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
 import Select from '../components/Select.js';
 import {ru} from '../i18n/ru.js';
-import type {WizardNavProps} from '../ui/types.js';
+import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 export default function ThresholdStep({
 	settings,

@@ -1,5 +1,5 @@
 import test from 'ava';
-import {isCancelError} from '../dist/compress/abort.js';
+import {isCancelError} from '../dist/core/compress/abort.js';
 
 test('isCancelError true when signal aborted', t => {
 	const c = new AbortController();

@@ -3,7 +3,7 @@ import {
 	rejectReasonForSizes,
 	savingsRatio,
 	videoMinSavingsRatio,
-} from '../dist/compress/write.js';
+} from '../dist/core/compress/write.js';
 
 test('savingsRatio', t => {
 	t.is(savingsRatio(1000, 700), 0.3);

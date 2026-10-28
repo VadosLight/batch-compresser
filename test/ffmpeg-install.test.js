@@ -2,7 +2,7 @@ import test from 'ava';
 import {
 	detectInstallPlan,
 	formatInstallCommand,
-} from '../dist/ffmpeg-install.js';
+} from '../dist/core/ffmpeg-install.js';
 
 const has =
 	(...names) =>

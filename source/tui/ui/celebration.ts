@@ -1,7 +1,6 @@
+import type {DurationTier} from '../../core/duration.js';
+import type {RunSummary} from '../../core/types.js';
 import {formatBytes, ru} from '../i18n/ru.js';
-import type {RunSummary} from '../types.js';
-
-export type DurationTier = 'quick' | 'standard' | 'long' | 'marathon' | 'epic';
 
 export type Celebration = {
 	tier: DurationTier;
@@ -10,11 +9,19 @@ export type Celebration = {
 	banner?: string;
 };
 
-const MINUTE = 60_000;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
+const banners: Partial<Record<DurationTier, string>> = {
+	marathon: ['  ~~~~~~~~~~~~~~', '  ~  MARATHON  ~', '  ~~~~~~~~~~~~~~'].join(
+		'\n',
+	),
+	epic: [
+		'  ==================',
+		'  ||  EPIC RUN  ||',
+		'  ==================',
+	].join('\n'),
+};
 
-export const formatDuration = (elapsedMs: number): string => {
+/** Locale-aware duration for TUI (Russian units). */
+export const formatDurationRu = (elapsedMs: number): string => {
 	const totalSec = Math.max(0, Math.floor(elapsedMs / 1000));
 	const days = Math.floor(totalSec / 86_400);
 	const hours = Math.floor((totalSec % 86_400) / 3600);
@@ -43,40 +50,9 @@ export const formatDuration = (elapsedMs: number): string => {
 	return parts.join(' ');
 };
 
-export const durationTier = (elapsedMs: number): DurationTier => {
-	if (elapsedMs < 5 * MINUTE) {
-		return 'quick';
-	}
-
-	if (elapsedMs < HOUR) {
-		return 'standard';
-	}
-
-	if (elapsedMs < 8 * HOUR) {
-		return 'long';
-	}
-
-	if (elapsedMs < DAY) {
-		return 'marathon';
-	}
-
-	return 'epic';
-};
-
-const banners: Partial<Record<DurationTier, string>> = {
-	marathon: ['  ~~~~~~~~~~~~~~', '  ~  MARATHON  ~', '  ~~~~~~~~~~~~~~'].join(
-		'\n',
-	),
-	epic: [
-		'  ==================',
-		'  ||  EPIC RUN  ||',
-		'  ==================',
-	].join('\n'),
-};
-
 export const buildCelebration = (summary: RunSummary): Celebration => {
-	const tier = durationTier(summary.elapsedMs);
-	const elapsedLabel = formatDuration(summary.elapsedMs);
+	const tier = summary.durationTier;
+	const elapsedLabel = formatDurationRu(summary.elapsedMs);
 	const saved = Math.max(0, summary.bytesBefore - summary.bytesAfter);
 	const savedLabel = formatBytes(saved);
 

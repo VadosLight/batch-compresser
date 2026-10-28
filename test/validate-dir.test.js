@@ -2,7 +2,7 @@ import test from 'ava';
 import {mkdtemp, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {validateDirectory} from '../dist/fs/validate-dir.js';
+import {validateDirectory} from '../dist/core/fs/validate-dir.js';
 
 test('validateDirectory rejects empty', async t => {
 	const result = await validateDirectory('   ');

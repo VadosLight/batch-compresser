@@ -3,9 +3,13 @@ import {Box, Text} from 'ink';
 import TextInput from 'ink-text-input';
 import Select from '../components/Select.js';
 import {ru} from '../i18n/ru.js';
-import {getPreset, qualityPresets, videoHeightChoices} from '../presets.js';
-import type {QualityPresetId, VideoMaxHeight} from '../types.js';
-import type {WizardNavProps} from '../ui/types.js';
+import {
+	getPreset,
+	qualityPresets,
+	videoHeightChoices,
+} from '../../core/presets.js';
+import type {QualityPresetId, VideoMaxHeight} from '../../core/types.js';
+import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 export default function VideoStep({settings, patch, onNext}: WizardNavProps) {
 	const [sub, setSub] = useState<'menu' | 'preset' | 'crf' | 'height'>('menu');

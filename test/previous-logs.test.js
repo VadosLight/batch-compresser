@@ -3,7 +3,7 @@ import test from 'ava';
 import {
 	parseProcessedPathsFromLogText,
 	previousDoneStatuses,
-} from '../dist/fs/previous-logs.js';
+} from '../dist/core/fs/previous-logs.js';
 
 test('previousDoneStatuses includes handled outcomes', t => {
 	t.true(previousDoneStatuses.has('OK'));

@@ -1,8 +1,8 @@
 import {appendFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
-import {formatBytes} from './i18n/ru.js';
+import {durationTier, formatDuration} from './duration.js';
+import {formatBytes} from './format-bytes.js';
 import type {CompressSettings, FileResult, RunSummary} from './types.js';
-import {formatDuration} from './ui/summary-celebration.js';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -19,55 +19,51 @@ export const makeLogFileName = (date = new Date()): string => {
 
 export const formatSettingsBlock = (settings: CompressSettings): string => {
 	const photoMp =
-		settings.megapixels === 0 ? 'без изменения' : `${settings.megapixels} Мп`;
+		settings.megapixels === 0 ? 'unchanged' : `${settings.megapixels}MP`;
 	const videoHeight =
-		settings.videoMaxHeight === 0 ? 'исходное' : `${settings.videoMaxHeight}p`;
-	const previousLogs = settings.previousLogsPath.trim() || 'нет';
+		settings.videoMaxHeight === 0 ? 'source' : `${settings.videoMaxHeight}p`;
+	const previousLogs = settings.previousLogsPath.trim() || 'none';
 
 	const lines = [
-		'=== ПАРАМЕТРЫ ===',
-		`Папка: ${settings.rootDir}`,
-		`Обрабатывать фото: ${settings.processPhotos ? 'да' : 'нет'}`,
-		`Обрабатывать видео: ${settings.processVideos ? 'да' : 'нет'}`,
+		'=== SETTINGS ===',
+		`rootDir=${settings.rootDir}`,
+		`processPhotos=${settings.processPhotos ? 'yes' : 'no'}`,
+		`processVideos=${settings.processVideos ? 'yes' : 'no'}`,
 	];
 
 	if (settings.processPhotos) {
 		lines.push(
-			`Мин. размер фото: ${settings.minPhotoMb} МБ`,
-			`Формат фото: ${settings.photoFormat}`,
-			`Макс. разрешение фото: ${photoMp}`,
-			`Пресет качества фото: ${settings.photoPreset}`,
-			`Качество фото: ${settings.photoQuality}`,
-			`Воркеры фото: ${settings.photoWorkers}`,
+			`minPhotoMb=${settings.minPhotoMb}`,
+			`photoFormat=${settings.photoFormat}`,
+			`megapixels=${photoMp}`,
+			`photoPreset=${settings.photoPreset}`,
+			`photoQuality=${settings.photoQuality}`,
+			`photoWorkers=${settings.photoWorkers}`,
 		);
 	}
 
 	if (settings.processVideos) {
 		lines.push(
-			`Мин. размер видео: ${settings.minVideoMb} МБ`,
-			`Пресет качества видео: ${settings.videoPreset}`,
-			`CRF видео: ${settings.videoCrf}`,
-			`Макс. высота видео: ${videoHeight}`,
-			`Сначала маленькие видео: ${settings.videosSmallFirst ? 'да' : 'нет'}`,
-			`Сканировать все форматы ffmpeg: ${
-				settings.videoScanAllFormats ? 'да' : 'нет'
-			}`,
-			`Воркеры видео: ${settings.videoWorkers}`,
+			`minVideoMb=${settings.minVideoMb}`,
+			`videoPreset=${settings.videoPreset}`,
+			`videoCrf=${settings.videoCrf}`,
+			`videoMaxHeight=${videoHeight}`,
+			`videosSmallFirst=${settings.videosSmallFirst ? 'yes' : 'no'}`,
+			`videoScanAllFormats=${settings.videoScanAllFormats ? 'yes' : 'no'}`,
+			`videoWorkers=${settings.videoWorkers}`,
 		);
 	}
 
 	lines.push(
-		`Режим вывода: ${
-			settings.replaceFiles ? 'замена файлов' : 'рядом *_compressed'
-		}`,
-		`Staging на быстрый диск: ${settings.stageToFastDisk ? 'да' : 'нет'}`,
+		`replaceFiles=${settings.replaceFiles ? 'yes' : 'no'}`,
+		`stageToFastDisk=${settings.stageToFastDisk ? 'yes' : 'no'}`,
 	);
 
 	if (settings.stageToFastDisk) {
-		lines.push(`Папка staging: ${settings.stageDir}`);
+		lines.push(`stageDir=${settings.stageDir}`);
 	}
 
-	lines.push(`Предыдущие логи (пропуск): ${previousLogs}`, '');
+	lines.push(`previousLogsPath=${previousLogs}`, '');
 
 	return lines.join('\n');
 };
@@ -82,7 +78,7 @@ export const createLogger = async (
 		`Started: ${new Date().toISOString()}`,
 		'',
 		formatSettingsBlock(settings),
-		'=== ФАЙЛЫ ===',
+		'=== FILES ===',
 		'',
 	].join('\n');
 
@@ -116,21 +112,22 @@ export const createLogger = async (
 
 		const block = [
 			'',
-			'=== СВОДКА ===',
-			`Найдено к обработке: ${summary.found}`,
-			`Сжато: ${summary.compressed}`,
-			`Пропущено (маленькие): ${summary.skipSmall}`,
-			`Пропущено (*_compressed): ${summary.skipCompressed}`,
-			`Пропущено (уже в логах): ${summary.skipPrevious}`,
-			`Пропущено (пользователь): ${summary.skipUser}`,
-			`Пропущено (результат больше): ${summary.skipLarger}`,
-			`Пропущено (экономия < 3%): ${summary.skipLowGain}`,
-			`Ошибки: ${summary.errors}`,
-			`Размер: ${formatBytes(summary.bytesBefore)} → ${formatBytes(
+			'=== SUMMARY ===',
+			`found=${summary.found}`,
+			`compressed=${summary.compressed}`,
+			`skipSmall=${summary.skipSmall}`,
+			`skipCompressed=${summary.skipCompressed}`,
+			`skipPrevious=${summary.skipPrevious}`,
+			`skipUser=${summary.skipUser}`,
+			`skipLarger=${summary.skipLarger}`,
+			`skipLowGain=${summary.skipLowGain}`,
+			`errors=${summary.errors}`,
+			`bytes=${formatBytes(summary.bytesBefore)} -> ${formatBytes(
 				summary.bytesAfter,
-			)} (экономия ${pct.toFixed(1)}%)`,
-			`Длительность: ${formatDuration(summary.elapsedMs)}`,
-			`Завершено: ${new Date().toISOString()}`,
+			)} (saved ${pct.toFixed(1)}%)`,
+			`elapsed=${formatDuration(summary.elapsedMs)}`,
+			`durationTier=${summary.durationTier}`,
+			`finished=${new Date().toISOString()}`,
 			'',
 		].join('\n');
 
@@ -201,6 +198,7 @@ export const buildSummary = (
 		bytesBefore,
 		bytesAfter,
 		elapsedMs,
+		durationTier: durationTier(elapsedMs),
 		logPath,
 		results,
 	};

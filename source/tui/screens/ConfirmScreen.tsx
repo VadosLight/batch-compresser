@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Text} from 'ink';
 import {ru} from '../i18n/ru.js';
-import type {CompressSettings} from '../types.js';
+import type {CompressSettings} from '../../core/types.js';
 
 type Props = {
 	settings: CompressSettings;

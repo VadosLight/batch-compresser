@@ -1,5 +1,5 @@
 import test from 'ava';
-import {sampleResourceAdvice} from '../dist/compress/resource-advice.js';
+import {sampleResourceAdvice} from '../dist/core/compress/resource-advice.js';
 
 test('decrease when free memory is low', t => {
 	const result = sampleResourceAdvice({
@@ -22,6 +22,21 @@ test('decrease when load is high', t => {
 		cpuCount: 8,
 		freeMemRatio: 0.5,
 	});
+	t.is(result.advice, 'decrease');
+});
+
+test('loadPerCore normalizes system-wide loadavg by core count', t => {
+	const result = sampleResourceAdvice({
+		videoWorkers: 4,
+		maxWorkers: 8,
+		pendingCount: 10,
+		load1: 65.8,
+		cpuCount: 11,
+		freeMemRatio: 0.5,
+	});
+	t.is(result.load1, 65.8);
+	t.is(result.cpuCount, 11);
+	t.is(result.loadPerCore, 65.8 / 11);
 	t.is(result.advice, 'decrease');
 });
 

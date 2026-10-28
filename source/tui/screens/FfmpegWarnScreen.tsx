@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Text} from 'ink';
-import type {FfmpegInstallPlan} from '../ffmpeg-install.js';
-import {formatInstallCommand} from '../ffmpeg-install.js';
+import type {FfmpegInstallPlan} from '../../core/ffmpeg-install.js';
+import {formatInstallCommand} from '../../core/ffmpeg-install.js';
 import {ru} from '../i18n/ru.js';
 
 type Props = {

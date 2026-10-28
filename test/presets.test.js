@@ -8,9 +8,9 @@ import {
 	mbToBytes,
 	scaledSize,
 	targetPixelsForMp,
-} from '../dist/presets.js';
-import {detectKind} from '../dist/scan.js';
-import {buildSummary, makeLogFileName} from '../dist/log.js';
+} from '../dist/core/presets.js';
+import {detectKind} from '../dist/core/scan.js';
+import {buildSummary, makeLogFileName} from '../dist/core/log.js';
 
 test('scaledSize downscales preserving aspect', t => {
 	const next = scaledSize(4000, 3000, 8_000_000);
@@ -124,6 +124,7 @@ test('buildSummary counts', t => {
 	t.is(summary.bytesBefore, 2400);
 	t.is(summary.bytesAfter, 1800);
 	t.is(summary.elapsedMs, 0);
+	t.is(summary.durationTier, 'quick');
 });
 
 test('buildSummary stores elapsedMs', t => {
@@ -134,4 +135,5 @@ test('buildSummary stores elapsedMs', t => {
 		12_345,
 	);
 	t.is(summary.elapsedMs, 12_345);
+	t.is(summary.durationTier, 'quick');
 });

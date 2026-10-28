@@ -1,21 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text, useApp, useInput} from 'ink';
-import {
-	runCompression,
-	type ActiveJobProgress,
-	type ProgressEvent,
-} from './compress/run.js';
-import {createDefaultSettings} from './defaults.js';
-import {checkFfmpeg} from './ffmpeg.js';
-import {
-	detectInstallPlan,
-	installFfmpeg,
-	type FfmpegInstallPlan,
-} from './ffmpeg-install.js';
-import {openContainingFolder} from './fs/open-path.js';
-import {loadProcessedPathsFromLogs} from './fs/previous-logs.js';
+import type {SessionPresenter} from '../core/app/SessionPresenter.js';
+import type {AppViewModel} from '../core/app/view-model.js';
+import {wizardStepOrdinal} from '../core/wizard-nav.js';
 import {ru} from './i18n/ru.js';
-import {scanDirectory} from './scan.js';
 import BootScreen from './screens/BootScreen.js';
 import ConfirmScreen from './screens/ConfirmScreen.js';
 import FfmpegInstallingScreen from './screens/FfmpegInstallingScreen.js';
@@ -23,303 +11,124 @@ import FfmpegWarnScreen from './screens/FfmpegWarnScreen.js';
 import RunningScreen from './screens/RunningScreen.js';
 import ScanningScreen from './screens/ScanningScreen.js';
 import SummaryScreen from './screens/SummaryScreen.js';
-import type {CompressSettings, MediaKind, RunSummary} from './types.js';
-import {
-	nextWizardStep,
-	prevWizardStep,
-	wizardStepOrdinal,
-	wizardStepTitle,
-	type Screen,
-} from './ui/types.js';
+import {wizardStepTitle} from './ui/wizard-titles.js';
 import Wizard from './wizard/Wizard.js';
 
 type Props = {
-	initialPath?: string;
+	presenter: SessionPresenter;
 };
 
-type ProgressState = {
-	done: number;
-	total: number;
-	current: string;
-	kind?: MediaKind;
-	status?: string;
-	filePercent?: number;
-	activeJobs: ActiveJobProgress[];
-	bytesBefore: number;
-	bytesAfter: number;
-	videoWorkers?: number;
-	resourceAdvice?: ProgressEvent['resourceAdvice'];
-};
-
-export default function App({initialPath}: Props) {
+export default function App({presenter}: Props) {
 	const {exit} = useApp();
-	const [screen, setScreen] = useState<Screen>('boot');
-	const [ffmpegAvailable, setFfmpegAvailable] = useState(true);
-	const [ffmpegLine, setFfmpegLine] = useState<string>();
-	const [ffmpegInstallPlan, setFfmpegInstallPlan] = useState<
-		FfmpegInstallPlan | undefined
-	>();
-	const [ffmpegInstallError, setFfmpegInstallError] = useState<string>();
-	const [step, setStep] = useState(1);
-	const [settings, setSettings] = useState<CompressSettings>(() =>
-		createDefaultSettings(initialPath ?? ''),
-	);
-	const [pathDraft, setPathDraft] = useState(initialPath ?? '');
-	const [error, setError] = useState<string>();
-	const [scanCount, setScanCount] = useState(0);
-	const [skipSmall, setSkipSmall] = useState(0);
-	const [skipCompressed, setSkipCompressed] = useState(0);
-	const [skipPrevious, setSkipPrevious] = useState(0);
-	const [progress, setProgress] = useState<ProgressState>({
-		done: 0,
-		total: 0,
-		current: '',
-		activeJobs: [],
-		bytesBefore: 0,
-		bytesAfter: 0,
-	});
-	const [summary, setSummary] = useState<RunSummary>();
-	const [skipVideo, setSkipVideo] = useState<(path: string) => void>();
-	const [adjustVideoWorkers, setAdjustVideoWorkers] =
-		useState<(n: number) => void>();
-	const [openFolderError, setOpenFolderError] = useState<string>();
+	const [vm, setVm] = useState<AppViewModel>(() => presenter.getViewModel());
+
+	useEffect(() => presenter.subscribe(setVm), [presenter]);
 
 	useEffect(() => {
-		void (async () => {
-			const status = await checkFfmpeg();
-			setFfmpegAvailable(status.available);
-			setFfmpegLine(status.versionLine);
-			if (!status.available) {
-				setSettings(s => ({...s, processVideos: false}));
-				const plan = await detectInstallPlan();
-				setFfmpegInstallPlan(plan);
-				setScreen('ffmpegWarn');
-			} else {
-				setScreen('wizard');
-			}
-		})();
-	}, []);
-
-	const continuePhotosOnly = () => {
-		setSettings(s => ({...s, processVideos: false}));
-		setFfmpegAvailable(false);
-		setFfmpegInstallError(undefined);
-		setScreen('wizard');
-	};
-
-	const runFfmpegInstall = async () => {
-		if (!ffmpegInstallPlan) {
-			continuePhotosOnly();
-			return;
-		}
-
-		setFfmpegInstallError(undefined);
-		setScreen('ffmpegInstalling');
-		const result = await installFfmpeg(ffmpegInstallPlan);
-		if (!result.ok) {
-			setFfmpegInstallError(result.errorMessage);
-			setScreen('ffmpegInstallFail');
-			return;
-		}
-
-		const status = await checkFfmpeg();
-		if (!status.available) {
-			setFfmpegInstallError(ru.ffmpegMissing);
-			setScreen('ffmpegInstallFail');
-			return;
-		}
-
-		setFfmpegAvailable(true);
-		setFfmpegLine(status.versionLine);
-		setSettings(s => ({...s, processVideos: true}));
-		setFfmpegInstallError(undefined);
-		setScreen('wizard');
-	};
-
-	const patch = (partial: Partial<CompressSettings>) => {
-		setSettings(s => ({...s, ...partial}));
-	};
+		void presenter.start();
+	}, [presenter]);
 
 	const wizardCtx = {
-		processPhotos: settings.processPhotos,
-		processVideos: settings.processVideos,
-		ffmpegAvailable,
+		processPhotos: vm.settings.processPhotos,
+		processVideos: vm.settings.processVideos,
+		ffmpegAvailable: vm.ffmpeg.available,
 	};
-	const stepMeta = wizardStepOrdinal(step, wizardCtx);
-
-	const goNext = () => {
-		setError(undefined);
-		setStep(s => nextWizardStep(s, wizardCtx));
-	};
-
-	const goBack = () => {
-		setError(undefined);
-		setStep(s => prevWizardStep(s, wizardCtx));
-	};
-
-	const validateAndScan = async () => {
-		setError(undefined);
-
-		if (!settings.rootDir) {
-			setError(ru.pathError.empty);
-			setStep(1);
-			setScreen('wizard');
-			return;
-		}
-
-		if (!settings.processPhotos && !settings.processVideos) {
-			setError(ru.needMediaType);
-			setStep(2);
-			setScreen('wizard');
-			return;
-		}
-
-		const next = {
-			...settings,
-			processVideos: settings.processVideos && ffmpegAvailable,
-		};
-		setSettings(next);
-		setScreen('scanning');
-
-		try {
-			const {paths: processedPaths} = await loadProcessedPathsFromLogs(
-				next.previousLogsPath,
-			);
-			const outcome = await scanDirectory(next, processedPaths);
-			setScanCount(outcome.toProcess.length);
-			setSkipSmall(outcome.skippedSmall.length);
-			setSkipCompressed(outcome.skippedCompressed.length);
-			setSkipPrevious(outcome.skippedPrevious.length);
-			setScreen('confirm');
-		} catch (error_) {
-			setError(error_ instanceof Error ? error_.message : String(error_));
-			setScreen('wizard');
-		}
-	};
-
-	const startRun = async () => {
-		setScreen('running');
-		setSkipVideo(undefined);
-		setAdjustVideoWorkers(undefined);
-		setProgress({
-			done: 0,
-			total: scanCount,
-			current: '',
-			activeJobs: [],
-			bytesBefore: 0,
-			bytesAfter: 0,
-		});
-		try {
-			const result = await runCompression(settings, {
-				onControls(controls) {
-					setSkipVideo(() => controls.skipVideo);
-					setAdjustVideoWorkers(() => controls.setVideoWorkers);
-				},
-				onProgress(event) {
-					setProgress({
-						done: event.done,
-						total: event.total,
-						current: event.current,
-						kind: event.kind,
-						status: event.status,
-						filePercent: event.filePercent,
-						activeJobs: event.activeJobs,
-						bytesBefore: event.bytesBefore,
-						bytesAfter: event.bytesAfter,
-						videoWorkers: event.videoWorkers,
-						resourceAdvice: event.resourceAdvice,
-					});
-				},
-			});
-			setSkipVideo(undefined);
-			setAdjustVideoWorkers(undefined);
-			setSummary(result);
-			setScreen('summary');
-		} catch (error_) {
-			setSkipVideo(undefined);
-			setAdjustVideoWorkers(undefined);
-			setError(error_ instanceof Error ? error_.message : String(error_));
-			setScreen('wizard');
-		}
-	};
+	const stepMeta = wizardStepOrdinal(vm.wizardStep, wizardCtx);
 
 	useInput((_input, key) => {
-		if (screen === 'ffmpegWarn') {
+		if (vm.screen === 'ffmpegWarn') {
 			if (key.return) {
-				if (ffmpegInstallPlan) {
-					void runFfmpegInstall();
+				if (vm.ffmpeg.installPlan) {
+					void presenter.installFfmpeg();
 				} else {
-					continuePhotosOnly();
+					presenter.continuePhotosOnly();
 				}
 			}
 
 			if (key.escape) {
-				continuePhotosOnly();
+				presenter.continuePhotosOnly();
 			}
+
+			return;
 		}
 
-		if (screen === 'ffmpegInstallFail') {
+		if (vm.screen === 'ffmpegInstallFail') {
 			if (key.return) {
-				void runFfmpegInstall();
+				void presenter.installFfmpeg();
 			}
 
 			if (key.escape) {
-				continuePhotosOnly();
+				presenter.continuePhotosOnly();
 			}
+
+			return;
 		}
 
-		if (screen === 'confirm') {
+		if (vm.screen === 'confirm') {
 			if (key.return) {
-				void startRun();
+				void presenter.confirmStart();
 			}
 
 			if (key.escape) {
-				setScreen('wizard');
+				presenter.confirmCancel();
 			}
+
+			return;
 		}
 
-		if (screen === 'summary' && (key.return || key.escape)) {
+		if (vm.screen === 'summary' && (key.return || key.escape)) {
 			exit();
+			return;
 		}
 
-		if (screen === 'wizard' && key.escape && step > 1) {
-			goBack();
+		if (vm.screen === 'wizard' && key.escape && vm.wizardStep > 1) {
+			presenter.wizardBack();
 		}
 	});
 
-	if (screen === 'boot') {
+	if (vm.screen === 'boot') {
 		return <BootScreen />;
 	}
 
-	if (screen === 'ffmpegWarn') {
-		return <FfmpegWarnScreen plan={ffmpegInstallPlan} />;
+	if (vm.screen === 'ffmpegWarn') {
+		return <FfmpegWarnScreen plan={vm.ffmpeg.installPlan} />;
 	}
 
-	if (screen === 'ffmpegInstalling') {
+	if (vm.screen === 'ffmpegInstalling') {
 		return <FfmpegInstallingScreen />;
 	}
 
-	if (screen === 'ffmpegInstallFail') {
-		return <FfmpegInstallingScreen failed errorMessage={ffmpegInstallError} />;
-	}
-
-	if (screen === 'scanning') {
-		return <ScanningScreen />;
-	}
-
-	if (screen === 'confirm') {
+	if (vm.screen === 'ffmpegInstallFail') {
 		return (
-			<ConfirmScreen
-				settings={settings}
-				scanCount={scanCount}
-				skipSmall={skipSmall}
-				skipCompressed={skipCompressed}
-				skipPrevious={skipPrevious}
+			<FfmpegInstallingScreen
+				failed
+				errorMessage={
+					vm.ffmpeg.installError === 'ffmpeg_still_missing'
+						? ru.ffmpegMissing
+						: vm.ffmpeg.installError
+				}
 			/>
 		);
 	}
 
-	if (screen === 'running') {
+	if (vm.screen === 'scanning') {
+		return <ScanningScreen />;
+	}
+
+	if (vm.screen === 'confirm' && vm.scan) {
+		return (
+			<ConfirmScreen
+				settings={vm.settings}
+				scanCount={vm.scan.count}
+				skipSmall={vm.scan.skipSmall}
+				skipCompressed={vm.scan.skipCompressed}
+				skipPrevious={vm.scan.skipPrevious}
+			/>
+		);
+	}
+
+	if (vm.screen === 'running' && vm.progress) {
+		const {progress} = vm;
 		return (
 			<RunningScreen
 				done={progress.done}
@@ -333,52 +142,96 @@ export default function App({initialPath}: Props) {
 				bytesAfter={progress.bytesAfter}
 				videoWorkers={progress.videoWorkers}
 				resourceAdvice={progress.resourceAdvice}
-				openFolderError={openFolderError}
+				openFolderError={vm.openFolderError ? ru.openFolderFailed : undefined}
 				onSkipVideo={path => {
-					skipVideo?.(path);
+					presenter.skipVideo(path);
 				}}
 				onSetVideoWorkers={n => {
-					adjustVideoWorkers?.(n);
+					presenter.setVideoWorkers(n);
 				}}
 				onOpenFolder={filePath => {
-					setOpenFolderError(undefined);
-					void openContainingFolder(filePath).catch(() => {
-						setOpenFolderError(ru.openFolderFailed);
-					});
+					void presenter.openContainingFolder(filePath);
 				}}
 			/>
 		);
 	}
 
-	if (screen === 'summary' && summary) {
-		return <SummaryScreen summary={summary} />;
+	if (vm.screen === 'summary' && vm.summary) {
+		return <SummaryScreen summary={vm.summary} />;
 	}
+
+	const errorText = (() => {
+		if (!vm.error) {
+			return undefined;
+		}
+
+		if (vm.error === 'path_empty') {
+			return ru.pathError.empty;
+		}
+
+		if (vm.error === 'need_media_type') {
+			return ru.needMediaType;
+		}
+
+		if (vm.error.startsWith('path_')) {
+			const reason = vm.error.slice('path_'.length);
+			if (reason === 'empty') {
+				return ru.pathError.empty;
+			}
+
+			if (reason === 'missing') {
+				return ru.pathError.missing;
+			}
+
+			if (reason === 'notDirectory') {
+				return ru.pathError.notDirectory;
+			}
+
+			if (reason === 'unreadable') {
+				return ru.pathError.unreadable;
+			}
+		}
+
+		return vm.error;
+	})();
 
 	return (
 		<Box flexDirection="column">
 			<Text bold>{ru.appTitle}</Text>
-			{ffmpegAvailable && ffmpegLine ? (
+			{vm.ffmpeg.available && vm.ffmpeg.versionLine ? (
 				<Text dimColor>
-					{ru.ffmpegOk}: {ffmpegLine}
+					{ru.ffmpegOk}: {vm.ffmpeg.versionLine}
 				</Text>
 			) : null}
-			{error ? <Text color="red">{error}</Text> : null}
+			{errorText ? <Text color="red">{errorText}</Text> : null}
 			<Box marginY={1}>
 				<Text color="cyan">
-					{ru.step(stepMeta.index, stepMeta.total, wizardStepTitle(step))}
+					{ru.step(
+						stepMeta.index,
+						stepMeta.total,
+						wizardStepTitle(vm.wizardStep),
+					)}
 				</Text>
 			</Box>
 			<Wizard
-				step={step}
-				settings={settings}
-				pathDraft={pathDraft}
-				ffmpegAvailable={ffmpegAvailable}
-				setPathDraft={setPathDraft}
-				patch={patch}
-				onNext={goNext}
-				onBack={goBack}
+				step={vm.wizardStep}
+				settings={vm.settings}
+				pathDraft={vm.pathDraft}
+				ffmpegAvailable={vm.ffmpeg.available}
+				setPathDraft={draft => {
+					presenter.setPathDraft(draft);
+				}}
+				patch={partial => {
+					presenter.patchSettings(partial);
+				}}
+				onNext={() => {
+					presenter.wizardNext();
+				}}
+				onBack={() => {
+					presenter.wizardBack();
+				}}
 				onFinish={() => {
-					void validateAndScan();
+					void presenter.finishWizard();
 				}}
 			/>
 		</Box>

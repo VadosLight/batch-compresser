@@ -1,6 +1,6 @@
 import React from 'react';
-import type {CompressSettings} from '../types.js';
-import type {PatchSettings} from '../ui/types.js';
+import type {CompressSettings} from '../../core/types.js';
+import type {PatchSettings} from '../../core/wizard-nav.js';
 import MediaTypesStep from './MediaTypesStep.js';
 import OutputStep from './OutputStep.js';
 import PathStep from './PathStep.js';

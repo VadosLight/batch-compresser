@@ -6,7 +6,9 @@ Guide for humans and AI agents working on this repo. Prefer this file over guess
 
 Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and videos in a folder.
 
-- **UI language:** Russian only (`source/i18n/ru.ts`)
+Architecture is **MVP**: `SessionPresenter` owns the session FSM; Ink is a thin View over an immutable `AppViewModel`. Domain lives in `source/core` (no React/Ink); UI + Node adapters live in `source/tui`. Future GUI can bind the same Presenter.
+
+- **UI language:** Russian only (`source/tui/i18n/ru.ts`)
 - **Photos:** `sharp` (quality, megapixel downscale, format JPEG/WebP/same)
 - **Videos:** system `ffmpeg` → H.264 + AAC in MP4 (CRF, max height)
 - **Output:** replace in place **or** sibling `*_compressed.*`
@@ -16,8 +18,8 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 - **Runtime video workers:** `[` / `]` change concurrency mid-run (drain on decrease — no abort); loadavg/RAM advice on screen (manual only, no auto-tune)
 - **ffmpeg missing:** offer confirmed install via brew/apt/dnf/pacman/winget/choco; Esc = photos only
 - **Open folder:** during run, `o` opens the original video’s parent folder; labels show `parent/file`
-- **Celebratory summary:** end screen title/banner by run duration (quick→epic); shows elapsed time + savings
-- **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` in the target folder (settings header + per-file lines + summary)
+- **Celebratory summary:** core computes `durationTier`; TUI picks Russian title/banner
+- **Log:** `batch-compresser-YYYYMMDD-HHmmss.log` — English `=== SETTINGS ===` / `=== SUMMARY ===` keys; per-file lines stay `STATUS | kind | path | …` (resume-safe)
 
 ## Stack
 
@@ -25,6 +27,7 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 | ----------- | ------------------------------------------------------------------------------- |
 | Runtime     | Node ≥ 16, ESM (`"type": "module"`)                                             |
 | Language    | TypeScript (`rootDir: ./source`, `outDir: dist`)                                |
+| Layout      | `source/core/**` (domain) + `source/tui/**` (Ink View + adapters)               |
 | TUI         | Ink 4 + React 18                                                                |
 | Inputs      | `ink-text-input`, custom `Select`                                               |
 | Photos      | `sharp`                                                                         |
@@ -40,37 +43,38 @@ Cross-platform **CLI TUI** (Ink + React) for **batch compression** of photos and
 ```bash
 npm install
 npm run build          # tsc → dist/
-npm start              # node dist/cli.js
+npm start              # node dist/tui/cli.js
 npm test               # prettier + xo + build + ava
 npm run dev            # tsc --watch
 ```
 
-Entry: `source/cli.tsx` → `dist/cli.js` (bin).
+Entry: `source/tui/cli.tsx` → `dist/tui/cli.js` (bin).
 
 ## Architecture
 
 ```
-cli.tsx
-  └─ app.tsx                 # Screen FSM + settings state + orchestration
-       ├─ screens/*          # boot / ffmpeg warn|install / scan / confirm / run / summary
-       ├─ wizard/*           # multi-step settings wizard
-       ├─ compress/run.ts    # scan → process → log → summary
-       │    ├─ photo.ts      # sharp pipeline
-       │    ├─ video.ts      # ffmpeg + progress pipe
-       │    ├─ concurrency.ts # adjustable video worker pool
-       │    ├─ resource-advice.ts # load/RAM → increase/decrease/ok
-       │    ├─ write.ts      # temp file, skip_larger, atomic commit
-       │    └─ ffmpeg-progress.ts
-       ├─ scan.ts            # recursive walk + filters (+ previous-log skip)
-       ├─ log.ts             # settings header, file lines, summary
-       ├─ ffmpeg.ts          # availability + ffprobe
-       ├─ ffmpeg-install.ts  # detect package manager + install ffmpeg
-       ├─ fs/*               # validate dir, folder picker, previous-logs parse
-       ├─ presets.ts         # quality/CRF presets, MP math, naming
-       ├─ defaults.ts        # default CompressSettings
-       ├─ types.ts           # shared domain types (prefer `type`, not interface)
-       └─ i18n/ru.ts         # all user-facing strings
+tui/cli.tsx
+ └─ tui/wire.ts              # Node AppPorts + SessionPresenter
+ └─ tui/App.tsx              # subscribe VM; keys → presenter commands
+      ├─ screens/* / wizard/*
+      ├─ i18n/ru.ts
+      └─ adapters/*          # FfmpegPort / FsPort / ProcessPort impls
+core/app/SessionPresenter.ts # FSM: boot → … → summary
+core/app/view-model.ts       # AppViewModel
+core/ports/                  # FfmpegPort, FsPort, ProcessPort
+core/compress/               # run, photo, video, write, …
+core/scan.ts, log.ts, …
 ```
+
+### Ports
+
+| Port          | Responsibility                                                         |
+| ------------- | ---------------------------------------------------------------------- |
+| `FfmpegPort`  | `check`, `probeVideo`, `listFormatsText`                               |
+| `FsPort`      | `validateDirectory`, `pickFolder` / `pickFile`, `openContainingFolder` |
+| `ProcessPort` | `detectInstallPlan`, `installFfmpeg`                                   |
+
+Core must not import React/Ink. TUI must not call `runCompression` / `scanDirectory` directly — only Presenter commands.
 
 ### Screen flow
 
@@ -78,93 +82,55 @@ cli.tsx
 boot → (ffmpegWarn? → optional install) → wizard(steps 1–7) → scanning → confirm → running → summary
 ```
 
-Wizard steps (see `ui/types.ts` / `wizard/Wizard.tsx`):
+Wizard steps (see `core/wizard-nav.ts` + `tui/ui/wizard-titles.ts`):
 
 1. Path (validate + optional OS folder picker)
 2. Media types (photo/video toggles)
 3. Min size thresholds (MB)
-4. Photo settings (format, MP, quality/preset) — skipped if photos off
-5. Video settings (CRF/preset, max height, optional small-first queue) — skipped if no ffmpeg / videos off
-6. Replace vs `_compressed`, workers for enabled media, optional HDD→SSD staging, optional previous logs path
+4. Photo settings — skipped if photos off
+5. Video settings — skipped if no ffmpeg / videos off
+6. Replace vs `_compressed`, workers, staging, previous logs
 7. Ready → scan
-
-Thresholds / confirm / log dump show only settings for enabled media types.
 
 ### Compression pipeline
 
-1. `createLogger(rootDir, settings)` — writes `=== ПАРАМЕТРЫ ===` first
-2. `scanDirectory` — recursive; classifies by extension (`videoScanAllFormats` → broad ffmpeg demuxer set, else core mp4/mov/mkv/…); applies min-size, `*_compressed`, and optional previous-log skips (`fs/previous-logs.ts`)
-3. Photos: parallel (`photoWorkers`, default `cpus()-1`)
-4. Videos: optional size-ascending queue (`videosSmallFirst`); parallel adjustable pool (`videoWorkers`, default `min(4, floor(cpus/2))`, max `cpus()`); per-file progress via `ffmpeg -progress pipe:1`
-5. Optional **staging** (`stageToFastDisk`): copy HDD → SSD tmp → encode → **delete staged input immediately** → write result back (EXDEV-safe `moveFile`); session dir cleaned in `finally`
-6. `commitOutput` — write `.tmp*`, compare sizes, rename/copy or discard (`skip_larger`)
-7. Final summary on screen and at end of log; staging session dir cleaned in `finally`
-
-### Progress events
-
-`ProgressEvent` in `compress/run.ts`:
-
-- Batch: `done` / `total` / `current`
-- Per file: `kind`, `status` (`probe` | `encode` | `finalize` | …), `filePercent` (videos)
-- Parallel: `activeJobs[]` — all in-flight files (RunningScreen lists each with its own bar)
-- Controls: `onControls({ skipVideo, setVideoWorkers, getVideoWorkers })` — AbortController per video path; runtime concurrency
-- Resource: `resourceAdvice` on progress during video phase (advice only)
-
-UI: `screens/RunningScreen.tsx` (↑↓ / `s` skip / `[` `]` workers / `o` folder; labels `parent/file`).
-
-## Key domain rules
-
-| Topic                 | Behavior                                                                              | Where                                                          |
-| --------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Photo MP              | Downscale only if `w*h` > target MP; keep aspect                                      | `presets.scaledSize`, `compress/photo.ts`                      |
-| Photo format          | `same` / `jpeg` / `webp`; HEIC etc. → JPEG when “same” needs conversion               | `compress/photo.ts`                                            |
-| EXIF                  | Apply orientation (`rotate()`); do not copy other EXIF                                | `compress/photo.ts`                                            |
-| Video out             | Always `.mp4` H.264 + AAC; optional scale by max height                               | `compress/video.ts`                                            |
-| Replace video         | May change extension; unlink old after successful write                               | `compress/write.ts`                                            |
-| Alongside name        | `name_compressed.ext`                                                                 | `presets.compressedSiblingPath`                                |
-| Min size `0`          | Filter off                                                                            | `presets.isBelowMinSize`                                       |
-| ffmpeg missing        | Warn; optional confirmed install via package manager; Esc = photos only               | `app.tsx`, `ffmpeg.ts`, `ffmpeg-install.ts`                    |
-| Folder/file picker    | macOS osascript / Windows WinForms / Linux zenity\|kdialog; `pickFolder` + `pickFile` | `fs/pick-folder.ts`                                            |
-| Staging               | Copy to `stageDir` (default OS tmp), encode there, commit to original                 | `fs/stage.ts`, `compress/run.ts`                               |
-| Previous logs         | Parse OK/SKIP_LARGER/SKIP_LOW_GAIN/SKIP_USER paths; skip as `skip_previous`           | `fs/previous-logs.ts`, `scan.ts`                               |
-| Interactive skip      | Focus active video → confirm → abort ffmpeg → `skip_user`                             | `compress/run.ts`, `video.ts`, RunningScreen                   |
-| Runtime video workers | `[`/`]` adjust pool; drain on decrease; load/RAM advice (no auto)                     | `compress/concurrency.ts`, `resource-advice.ts`, RunningScreen |
-| Open video folder     | `o` opens original parent dir; job label `parent/basename`                            | `fs/open-path.ts`, `ui/job-label.ts`, RunningScreen            |
-| Celebratory summary   | Duration tier greeting + elapsed/savings stats on SummaryScreen                       | `ui/summary-celebration.ts`, SummaryScreen, `log.ts`           |
+1. `createLogger` — writes `=== SETTINGS ===` (EN keys)
+2. `scanDirectory` — recursive; min-size / `*_compressed` / previous-log skips
+3. Photos parallel (`photoWorkers`); videos adjustable pool (`videoWorkers`)
+4. Optional staging HDD→SSD; `commitOutput` discard if not smaller
+5. Summary on screen + `=== SUMMARY ===` in log
 
 ## Conventions for changes
 
-1. **Prefer `type` over `interface`** (project rule).
-2. Keep **Russian strings** in `i18n/ru.ts` — no hardcoded UI copy in components when avoidable.
-3. New wizard step → add component under `wizard/`, wire in `Wizard.tsx`, bump `totalWizardSteps` / titles in `ui/types.ts`.
-4. New screen → `screens/` + branch in `app.tsx`.
-5. After logic changes affecting utils: add/update tests in `test/*.test.js` importing from **`dist/`** (tests run after `tsc`).
-6. Run `npm test` before claiming done (prettier + xo + build + ava).
+1. **Prefer `type` over `interface`**.
+2. Russian strings only in `tui/i18n/ru.ts`.
+3. New wizard step → `tui/wizard/` + `wizard-nav` / titles.
+4. New screen → `tui/screens/` + branch in `tui/App.tsx` (render only; logic in Presenter).
+5. Tests import from **`dist/`** (after `tsc`). Presenter tests use fake ports; Ink smoke via `ink-testing-library`.
+6. Run `npm test` before claiming done.
 7. Do not edit plan files under `.cursor/plans/` unless asked.
-8. Avoid bloating `app.tsx` — orchestration only; UI in screens/wizard.
 
 ## Where to change what
 
-| Goal                          | Touch                                                    |
-| ----------------------------- | -------------------------------------------------------- |
-| New CLI flag                  | `cli.tsx` + pass into `App`                              |
-| Default settings              | `defaults.ts`, `presets.ts`                              |
-| Log format / settings dump    | `log.ts` (`formatSettingsBlock`)                         |
-| Photo codecs / resize         | `compress/photo.ts`                                      |
-| Video encode flags / progress | `compress/video.ts`, `ffmpeg-progress.ts`                |
-| Extensions scanned            | `scan.ts`, `video-extensions.ts` (`videoScanAllFormats`) |
-| Worker / queue / staging      | `compress/run.ts`, `fs/stage.ts`                         |
-| Resume from previous logs     | `fs/previous-logs.ts`, `scan.ts`, wizard OutputStep      |
-| Select keyboard UX            | `components/Select.tsx`                                  |
+| Goal                   | Touch                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| Session FSM / commands | `core/app/SessionPresenter.ts`, `view-model.ts`                                  |
+| Ports / adapters       | `core/ports/*`, `tui/adapters/*`, `tui/wire.ts`                                  |
+| New CLI flag           | `tui/cli.tsx`                                                                    |
+| Default settings       | `core/defaults.ts`, `presets.ts`                                                 |
+| Log format             | `core/log.ts`                                                                    |
+| Photo / video encode   | `core/compress/photo.ts`, `video.ts`                                             |
+| Scan extensions        | `core/scan.ts`, `video-extensions.ts`                                            |
+| Celebration copy       | `tui/ui/celebration.ts`, `tui/i18n/ru.ts` (`durationTier` in `core/duration.ts`) |
 
 ## Out of scope (v1 — do not add unless requested)
 
-- English / i18n switcher
+- English / i18n switcher for TUI
 - Bundled ffmpeg binary
-- Desktop GUI (Electron/Tauri)
+- Desktop GUI (Electron/Tauri) — Presenter is ready; ship separately
 - Full EXIF preservation
 - Multiple root folders in one run
 
 ## Mental model for agents
 
-User configures once in the wizard → confirm → tool walks the tree and compresses with clear logging. Correctness and “don’t make files bigger” matter more than micro-optimizations. Keep modules small and the FSM in `app.tsx` readable.
+User configures in the wizard → confirm → Presenter walks the tree and compresses with clear logging. View only renders `AppViewModel` and dispatches semantic commands. Correctness and “don’t make files bigger” matter more than micro-optimizations.

@@ -1,3 +1,5 @@
+import type {DurationTier} from './duration.js';
+
 export type MediaKind = 'photo' | 'video';
 
 export type PhotoFormatMode = 'same' | 'jpeg' | 'webp';
@@ -81,6 +83,8 @@ export type RunSummary = {
 	bytesAfter: number;
 	/** Wall-clock duration of the compression run. */
 	elapsedMs: number;
+	/** Duration tier for celebration UI (computed in core). */
+	durationTier: DurationTier;
 	logPath: string;
 	results: FileResult[];
 };

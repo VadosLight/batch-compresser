@@ -89,8 +89,9 @@ export const ru = {
 	openFolderFailed: 'Не удалось открыть папку',
 	skipConfirm: (name: string) => `Пропустить ${name}? Enter — да · Esc — нет`,
 	videoWorkersLive: (n: number) => `Воркеры видео: ${n}`,
-	resourceLoad: (load1: number, cpuCount: number) =>
-		`нагрузка ${load1.toFixed(1)}/${cpuCount}`,
+	/** `loadPerCore` = loadavg / cores; 1.00× ≈ все ядра заняты (macOS/Linux). */
+	resourceLoad: (loadPerCore: number, cpuCount: number) =>
+		`нагрузка ${loadPerCore.toFixed(2)}× (${cpuCount})`,
 	workerAdviceIncrease: 'совет: увеличить',
 	workerAdviceDecrease: 'совет: уменьшить',
 	workerAdviceOk: 'совет: оптимально',

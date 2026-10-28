@@ -5,8 +5,14 @@ import {maxVideoWorkers} from '../presets.js';
 export type WorkerAdvice = 'increase' | 'decrease' | 'ok';
 
 export type ResourceAdvice = {
+	/** Raw 1-minute load average (system-wide runnable count). */
 	load1: number;
 	cpuCount: number;
+	/**
+	 * Per-core load: `load1 / cpuCount`.
+	 * Unix/macOS loadavg sums work across cores — 1.0 ≈ all cores busy.
+	 */
+	loadPerCore: number;
 	freeMemRatio: number;
 	videoWorkers: number;
 	advice: WorkerAdvice;
@@ -28,6 +34,7 @@ export const sampleResourceAdvice = (
 ): ResourceAdvice => {
 	const cpuCount = Math.max(1, input.cpuCount ?? cpus().length);
 	const load1 = input.load1 ?? loadavg()[0] ?? 0;
+	const loadPerCore = load1 / cpuCount;
 	const freeMemRatio =
 		input.freeMemRatio ?? (totalmem() > 0 ? freemem() / totalmem() : 1);
 	const videoWorkers = Math.max(1, input.videoWorkers);
@@ -40,13 +47,13 @@ export const sampleResourceAdvice = (
 
 	if (videoWorkers > 1 && freeMemRatio < 0.1) {
 		advice = 'decrease';
-	} else if (loadAvailable && videoWorkers > 1 && load1 / cpuCount >= 0.85) {
+	} else if (loadAvailable && videoWorkers > 1 && loadPerCore >= 0.85) {
 		advice = 'decrease';
 	} else if (
 		loadAvailable &&
 		videoWorkers < maxWorkers &&
 		pendingCount > 0 &&
-		load1 / cpuCount <= 0.45
+		loadPerCore <= 0.45
 	) {
 		advice = 'increase';
 	}
@@ -54,6 +61,7 @@ export const sampleResourceAdvice = (
 	return {
 		load1,
 		cpuCount,
+		loadPerCore,
 		freeMemRatio,
 		videoWorkers,
 		advice,

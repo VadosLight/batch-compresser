@@ -1,9 +1,6 @@
 import test from 'ava';
-import {
-	buildCelebration,
-	durationTier,
-	formatDuration,
-} from '../dist/ui/summary-celebration.js';
+import {durationTier, formatDuration} from '../dist/core/duration.js';
+import {buildCelebration} from '../dist/tui/ui/celebration.js';
 
 const minute = 60_000;
 const hour = 60 * minute;
@@ -20,11 +17,11 @@ test('durationTier boundaries', t => {
 	t.is(durationTier(day), 'epic');
 });
 
-test('formatDuration human labels', t => {
-	t.is(formatDuration(32_000), '32 с');
-	t.is(formatDuration(45 * minute), '45 мин');
-	t.true(formatDuration(2 * day + 5 * hour + 12 * minute).includes('2 д'));
-	t.true(formatDuration(2 * day + 5 * hour).includes('5 ч'));
+test('formatDuration human labels (neutral)', t => {
+	t.is(formatDuration(32_000), '32s');
+	t.is(formatDuration(45 * minute), '45m');
+	t.true(formatDuration(2 * day + 5 * hour + 12 * minute).includes('2d'));
+	t.true(formatDuration(2 * day + 5 * hour).includes('5h'));
 });
 
 test('buildCelebration returns title and epic banner', t => {
@@ -43,6 +40,7 @@ test('buildCelebration returns title and epic banner', t => {
 		logPath: '/tmp/x.log',
 		results: [],
 		elapsedMs: day + hour,
+		durationTier: 'epic',
 	});
 	t.is(celebration.tier, 'epic');
 	t.truthy(celebration.title);
@@ -66,6 +64,7 @@ test('buildCelebration quick has no banner', t => {
 		logPath: '/tmp/x.log',
 		results: [],
 		elapsedMs: 20_000,
+		durationTier: 'quick',
 	});
 	t.is(celebration.tier, 'quick');
 	t.is(celebration.banner, undefined);

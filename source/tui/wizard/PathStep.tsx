@@ -3,10 +3,10 @@ import {Box, Text, useInput} from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
 import Select, {type SelectItem} from '../components/Select.js';
-import {pickFolder} from '../fs/pick-folder.js';
-import {validateDirectory} from '../fs/validate-dir.js';
+import {pickFolder} from '../adapters/pick-folder.js';
+import {validateDirectory} from '../../core/fs/validate-dir.js';
 import {ru} from '../i18n/ru.js';
-import type {PatchSettings} from '../ui/types.js';
+import type {PatchSettings} from '../../core/wizard-nav.js';
 
 type PathAction = 'type' | 'browse' | 'next';
 

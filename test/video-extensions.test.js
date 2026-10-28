@@ -1,10 +1,10 @@
 import test from 'ava';
-import {detectKind} from '../dist/scan.js';
+import {detectKind} from '../dist/core/scan.js';
 import {
 	ALL_VIDEO_EXTENSIONS,
 	CORE_VIDEO_EXTENSIONS,
 	resolveVideoExtensions,
-} from '../dist/video-extensions.js';
+} from '../dist/core/video-extensions.js';
 
 test('core set covers common containers', t => {
 	t.true(CORE_VIDEO_EXTENSIONS.has('.mp4'));

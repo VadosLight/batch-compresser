@@ -7,8 +7,8 @@ import {
 	cleanupStageSession,
 	createStageSession,
 	stageFile,
-} from '../dist/fs/stage.js';
-import {moveFile} from '../dist/compress/write.js';
+} from '../dist/core/fs/stage.js';
+import {moveFile} from '../dist/core/compress/write.js';
 import {access} from 'node:fs/promises';
 
 test('stageFile copies content into session dir', async t => {

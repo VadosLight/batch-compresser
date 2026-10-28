@@ -3,9 +3,9 @@ import {
 	parseHhMmSs,
 	parseProgressTimeSec,
 	percentFromTime,
-} from '../dist/compress/ffmpeg-progress.js';
-import {formatSettingsBlock} from '../dist/log.js';
-import {createDefaultSettings} from '../dist/defaults.js';
+} from '../dist/core/compress/ffmpeg-progress.js';
+import {formatSettingsBlock} from '../dist/core/log.js';
+import {createDefaultSettings} from '../dist/core/defaults.js';
 
 test('parseHhMmSs', t => {
 	t.is(parseHhMmSs('00:01:30.50'), 90.5);
@@ -33,17 +33,17 @@ test('formatSettingsBlock includes key settings', t => {
 	settings.videoCrf = 24;
 	settings.replaceFiles = true;
 	const block = formatSettingsBlock(settings);
-	t.true(block.includes('=== ПАРАМЕТРЫ ==='));
+	t.true(block.includes('=== SETTINGS ==='));
 	t.true(block.includes('/tmp/media'));
-	t.true(block.includes('Качество фото: 75'));
-	t.true(block.includes('CRF видео: 24'));
-	t.true(block.includes('замена файлов'));
-	t.true(block.includes('Воркеры видео:'));
-	t.true(block.includes('Staging на быстрый диск:'));
+	t.true(block.includes('photoQuality=75'));
+	t.true(block.includes('videoCrf=24'));
+	t.true(block.includes('replaceFiles=yes'));
+	t.true(block.includes('videoWorkers='));
+	t.true(block.includes('stageToFastDisk='));
 });
 
 test('defaultVideoWorkers at least 1', async t => {
-	const {defaultVideoWorkers} = await import('../dist/presets.js');
+	const {defaultVideoWorkers} = await import('../dist/core/presets.js');
 	t.true(defaultVideoWorkers() >= 1);
 	t.true(defaultVideoWorkers() <= 4);
 });

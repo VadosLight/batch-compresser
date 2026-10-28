@@ -1,5 +1,5 @@
 import test from 'ava';
-import {formatJobLabel} from '../dist/ui/job-label.js';
+import {formatJobLabel} from '../dist/tui/ui/job-label.js';
 
 test('formatJobLabel uses parent and basename', t => {
 	t.is(formatJobLabel('/Users/me/Отпуск/IMG_001.mp4'), 'Отпуск/IMG_001.mp4');

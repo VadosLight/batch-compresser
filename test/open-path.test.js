@@ -2,7 +2,7 @@ import test from 'ava';
 import {
 	openCommandForPlatform,
 	openContainingFolder,
-} from '../dist/fs/open-path.js';
+} from '../dist/tui/adapters/open-path.js';
 
 test('openCommandForPlatform macOS', t => {
 	t.deepEqual(openCommandForPlatform('/a/b', 'darwin'), {

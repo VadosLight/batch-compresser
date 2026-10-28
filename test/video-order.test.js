@@ -1,5 +1,5 @@
 import test from 'ava';
-import {orderVideosForProcessing} from '../dist/compress/run.js';
+import {orderVideosForProcessing} from '../dist/core/compress/run.js';
 
 test('orderVideosForProcessing sorts ascending when enabled', t => {
 	const input = [

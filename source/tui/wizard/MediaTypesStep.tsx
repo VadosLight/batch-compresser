@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Text} from 'ink';
 import Select from '../components/Select.js';
 import {ru} from '../i18n/ru.js';
-import type {WizardNavProps} from '../ui/types.js';
+import type {WizardNavProps} from '../../core/wizard-nav.js';
 
 type Props = WizardNavProps & {
 	ffmpegAvailable: boolean;

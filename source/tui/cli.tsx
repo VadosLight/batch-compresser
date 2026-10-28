@@ -2,7 +2,8 @@
 import React from 'react';
 import {render} from 'ink';
 import meow from 'meow';
-import App from './app.js';
+import App from './App.js';
+import {createSessionPresenter} from './wire.js';
 
 const cli = meow(
 	`
@@ -27,4 +28,5 @@ const cli = meow(
 	},
 );
 
-render(<App initialPath={cli.flags.path} />);
+const presenter = createSessionPresenter(cli.flags.path);
+render(<App presenter={presenter} />);
